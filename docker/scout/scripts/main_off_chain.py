@@ -14,7 +14,9 @@ from scripts.addresses import CHAIN_ETH
 from scripts.addresses import SUPPORTED_CHAINS
 from scripts.addresses import checksum_address_dict
 from scripts.addresses import reverse_addresses
+from scripts.data import aggregate_and_sum_dataset
 from scripts.data import get_apr_from_convex
+from scripts.data import get_bribes_data
 from scripts.data import get_flyer_data
 from scripts.data import get_sett_roi_data
 from scripts.logconf import log
@@ -73,6 +75,24 @@ def update_flyer_gauge(
             log.info(f"Updated {flyer_data_point} Flyer data point")
 
 
+def update_bribes_gauge(
+        bribes_gauge: Gauge, bribes_data: Dict,
+) -> None:
+    bribes_data = sorted(bribes_data['epochs'], key=lambda itm: itm['round'], reverse=True)
+    latest_epoch = bribes_data[0]
+    bribes_dataset = aggregate_and_sum_dataset(
+        latest_epoch['bribes'], 'pool', ['amount', 'amountDollars'], ['token']
+    )
+    for pool_name, bribes in bribes_dataset.items():
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amount").set(
+            bribes['amount']
+        )
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amountDollars").set(
+            bribes['amountDollars']
+        )
+        log.info(f"Updated {pool_name} bribe data!")
+
+
 def main():
     log.info(
         f"Starting Prometheus scout-collector server at http://localhost:{PROMETHEUS_PORT}"
@@ -88,6 +108,11 @@ def main():
         documentation="Flyer CVX data",
         labelnames=["param"],
     )
+    bribes_gauge = Gauge(
+        name="bribesData",
+        documentation="Bribes CVX data",
+        labelnames=["pool", "round", "token", "param"],
+    )
     timer = 0
     while True:
         # For Llama API we shouln't update more than once per 10 minutes
@@ -97,6 +122,9 @@ def main():
             flyer_data = get_flyer_data()
             if flyer_data:
                 update_flyer_gauge(flyer_gauge, flyer_data)
+            bribes_data = get_bribes_data()
+            if bribes_data:
+                update_bribes_gauge(bribes_gauge, bribes_data)
 
         for network in SUPPORTED_CHAINS:
             setts_roi = get_sett_roi_data(network)

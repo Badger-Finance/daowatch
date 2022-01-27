@@ -1,5 +1,7 @@
 import json
 import re
+from collections import Counter
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict
 from typing import List
@@ -397,6 +399,17 @@ def get_flyer_data() -> Optional[Dict]:
     return flyer_data
 
 
+def get_bribes_data() -> Optional[Dict]:
+    log.info("Fetching Bribes data")
+    bribes_data = get_json_request(
+        request_type="get", url="https://api.llama.airforce/bribes"
+    )
+    if not bribes_data:
+        log.warning("Cannot fetch bribes data")
+        return
+    return bribes_data
+
+
 TOKEN_TO_TREASURY_TOKEN_NAME_MAPPING = {
     'btc': "WTBC",
     'usd': "USDT",
@@ -454,3 +467,24 @@ def get_token_prices(token_csv, countertoken_csv, network) -> Optional[Dict]:
 
     token_prices = get_json_request(request_type="get", url=url)
     return token_prices
+
+
+def aggregate_and_sum_dataset(
+        dataset: List, group_by_key: str, sum_value_keys: List,
+        additional_keys: Optional[List] = None
+):
+    """
+    Function that:
+    first aggregates by group_by_key :param. Then sums up all the values by sum_value_keys
+    additional_keys are used just to add values to returned dict without summing them
+    """
+    if not additional_keys:
+        additional_keys = []
+    dic = defaultdict(Counter)
+    for item in dataset:
+        key = item[group_by_key]
+        vals = {k: item[k] for k in sum_value_keys}
+        dic[key].update(vals)
+        for add_key in additional_keys:
+            dic[key][add_key] = item[add_key]
+    return dic
