@@ -15,6 +15,7 @@ from scripts.addresses import SUPPORTED_CHAINS
 from scripts.addresses import checksum_address_dict
 from scripts.addresses import reverse_addresses
 from scripts.data import get_apr_from_convex
+from scripts.data import get_flyer_data
 from scripts.data import get_sett_roi_data
 from scripts.logconf import log
 
@@ -61,6 +62,16 @@ def update_setts_roi_gauge(
                 sett_name, source['name'], network, "maxApr").set(source['maxApr'])
 
 
+def update_flyer_gauge(
+        flyer_gauge: Gauge, flyer_data: Dict,
+) -> None:
+    if flyer_data.get('success'):
+        flyer_data['flyer'].pop('id')
+        for flyer_data_point, value in flyer_data['flyer'].items():
+            flyer_gauge.labels(flyer_data_point).set(value)
+            log.info(f"Updated {flyer_data_point} Flyer data point")
+
+
 def main():
     log.info(
         f"Starting Prometheus scout-collector server at http://localhost:{PROMETHEUS_PORT}"
@@ -71,12 +82,21 @@ def main():
         documentation="Badger Sett ROI data",
         labelnames=["sett", "source", "chain", "param"],
     )
+    flyer_gauge = Gauge(
+        name="flyerData",
+        documentation="Flyer CVX data",
+        labelnames=["param"],
+    )
     while True:
         for network in SUPPORTED_CHAINS:
             setts_roi = get_sett_roi_data(network)
             if not setts_roi:
                 continue
             update_setts_roi_gauge(badger_sett_roi_gauge, setts_roi, network)
+        # Get flyer data and update gauge
+        flyer_data = get_flyer_data()
+        if flyer_data:
+            update_flyer_gauge(flyer_gauge, flyer_data)
         # Get data from convex to compare it to data from Badger API
         crvcvx_pools_data = get_apr_from_convex()
         if crvcvx_pools_data:

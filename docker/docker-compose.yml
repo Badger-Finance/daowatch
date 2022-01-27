@@ -49,6 +49,7 @@ services:
       - ETHNODEURL
     entrypoint:
       - "./startOffChain.sh"
+    depends_on: [prometheus]
   renderer:
     image: grafana/grafana-image-renderer:latest
     ports:

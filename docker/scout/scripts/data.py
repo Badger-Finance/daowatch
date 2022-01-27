@@ -386,6 +386,17 @@ def get_sett_roi_data(network: Optional[str] = "ETH") -> Optional[List[Dict]]:
     return setts_data
 
 
+def get_flyer_data() -> Optional[Dict]:
+    log.info("Fetching Flyer data")
+    flyer_data = get_json_request(
+        request_type="get", url="https://api.llama.airforce/flyer"
+    )
+    if not flyer_data:
+        log.warning("Cannot fetch flyer data")
+        return
+    return flyer_data
+
+
 TOKEN_TO_TREASURY_TOKEN_NAME_MAPPING = {
     'btc': "WTBC",
     'usd': "USDT",
