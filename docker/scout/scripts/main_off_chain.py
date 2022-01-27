@@ -20,7 +20,8 @@ from scripts.data import get_sett_roi_data
 from scripts.logconf import log
 
 PROMETHEUS_PORT = 8801
-
+UPDATE_CYCLE_SLEEP = 60
+TEN_MINUTES = 60 * 10
 
 ADDRESSES = checksum_address_dict(ADDRESSES_ETH)
 # Flatten CVX dicts
@@ -87,18 +88,26 @@ def main():
         documentation="Flyer CVX data",
         labelnames=["param"],
     )
+    timer = 0
     while True:
+        # For Llama API we shouln't update more than once per 10 minutes
+        # Get flyer data and update gauge
+        if timer >= TEN_MINUTES or timer == 0:
+            timer = 0
+            flyer_data = get_flyer_data()
+            if flyer_data:
+                update_flyer_gauge(flyer_gauge, flyer_data)
+
         for network in SUPPORTED_CHAINS:
             setts_roi = get_sett_roi_data(network)
             if not setts_roi:
                 continue
             update_setts_roi_gauge(badger_sett_roi_gauge, setts_roi, network)
-        # Get flyer data and update gauge
-        flyer_data = get_flyer_data()
-        if flyer_data:
-            update_flyer_gauge(flyer_gauge, flyer_data)
+
         # Get data from convex to compare it to data from Badger API
         crvcvx_pools_data = get_apr_from_convex()
         if crvcvx_pools_data:
             update_crv_setts_roi_gauge(badger_sett_roi_gauge, crvcvx_pools_data)
-        sleep(60)
+
+        timer += UPDATE_CYCLE_SLEEP
+        sleep(UPDATE_CYCLE_SLEEP)
