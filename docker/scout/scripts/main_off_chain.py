@@ -90,6 +90,10 @@ def update_bribes_gauge(
         bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amountDollars").set(
             bribes['amountDollars']
         )
+        vl_cvx = bribes['amountDollars'] / latest_epoch['bribed'][pool_name]
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "$/vlCVX").set(
+            vl_cvx
+        )
         log.info(f"Updated {pool_name} bribe data!")
 
 
