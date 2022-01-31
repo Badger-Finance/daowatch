@@ -35,6 +35,7 @@ services:
     build:
       context: ./scout
     container_name: scout-collector
+    depends_on: [prometheus]
     ports:
       - "8801"
     environment:
