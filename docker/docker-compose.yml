@@ -35,6 +35,7 @@ services:
     build:
       context: ./scout
     container_name: scout-collector
+    depends_on: [prometheus]
     ports:
       - "8801"
     environment:
@@ -49,6 +50,7 @@ services:
       - ETHNODEURL
     entrypoint:
       - "./startOffChain.sh"
+    depends_on: [prometheus]
   renderer:
     image: grafana/grafana-image-renderer:latest
     ports:

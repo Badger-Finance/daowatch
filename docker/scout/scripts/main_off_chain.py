@@ -14,12 +14,16 @@ from scripts.addresses import CHAIN_ETH
 from scripts.addresses import SUPPORTED_CHAINS
 from scripts.addresses import checksum_address_dict
 from scripts.addresses import reverse_addresses
+from scripts.data import aggregate_and_sum_dataset
 from scripts.data import get_apr_from_convex
+from scripts.data import get_bribes_data
+from scripts.data import get_flyer_data
 from scripts.data import get_sett_roi_data
 from scripts.logconf import log
 
 PROMETHEUS_PORT = 8801
-
+UPDATE_CYCLE_SLEEP = 60
+TEN_MINUTES = 60 * 10
 
 ADDRESSES = checksum_address_dict(ADDRESSES_ETH)
 # Flatten CVX dicts
@@ -61,6 +65,38 @@ def update_setts_roi_gauge(
                 sett_name, source['name'], network, "maxApr").set(source['maxApr'])
 
 
+def update_flyer_gauge(
+        flyer_gauge: Gauge, flyer_data: Dict,
+) -> None:
+    if flyer_data.get('success'):
+        flyer_data['flyer'].pop('id')
+        for flyer_data_point, value in flyer_data['flyer'].items():
+            flyer_gauge.labels(flyer_data_point).set(value)
+            log.info(f"Updated {flyer_data_point} Flyer data point")
+
+
+def update_bribes_gauge(
+        bribes_gauge: Gauge, bribes_data: Dict,
+) -> None:
+    bribes_data = sorted(bribes_data['epochs'], key=lambda itm: itm['round'], reverse=True)
+    latest_epoch = bribes_data[0]
+    bribes_dataset = aggregate_and_sum_dataset(
+        latest_epoch['bribes'], 'pool', ['amount', 'amountDollars'], ['token']
+    )
+    for pool_name, bribes in bribes_dataset.items():
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amount").set(
+            bribes['amount']
+        )
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amountDollars").set(
+            bribes['amountDollars']
+        )
+        vl_cvx = bribes['amountDollars'] / latest_epoch['bribed'][pool_name]
+        bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "$/vlCVX").set(
+            vl_cvx
+        )
+        log.info(f"Updated {pool_name} bribe data!")
+
+
 def main():
     log.info(
         f"Starting Prometheus scout-collector server at http://localhost:{PROMETHEUS_PORT}"
@@ -71,14 +107,39 @@ def main():
         documentation="Badger Sett ROI data",
         labelnames=["sett", "source", "chain", "param"],
     )
+    flyer_gauge = Gauge(
+        name="flyerData",
+        documentation="Flyer CVX data",
+        labelnames=["param"],
+    )
+    bribes_gauge = Gauge(
+        name="bribesData",
+        documentation="Bribes CVX data",
+        labelnames=["pool", "round", "token", "param"],
+    )
+    timer = 0
     while True:
+        # For Llama API we shouln't update more than once per 10 minutes
+        # Get flyer data and update gauge
+        if timer >= TEN_MINUTES or timer == 0:
+            timer = 0
+            flyer_data = get_flyer_data()
+            if flyer_data:
+                update_flyer_gauge(flyer_gauge, flyer_data)
+            bribes_data = get_bribes_data()
+            if bribes_data:
+                update_bribes_gauge(bribes_gauge, bribes_data)
+
         for network in SUPPORTED_CHAINS:
             setts_roi = get_sett_roi_data(network)
             if not setts_roi:
                 continue
             update_setts_roi_gauge(badger_sett_roi_gauge, setts_roi, network)
+
         # Get data from convex to compare it to data from Badger API
         crvcvx_pools_data = get_apr_from_convex()
         if crvcvx_pools_data:
             update_crv_setts_roi_gauge(badger_sett_roi_gauge, crvcvx_pools_data)
-        sleep(60)
+
+        timer += UPDATE_CYCLE_SLEEP
+        sleep(UPDATE_CYCLE_SLEEP)
