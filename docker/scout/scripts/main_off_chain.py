@@ -17,6 +17,7 @@ from scripts.addresses import reverse_addresses
 from scripts.data import aggregate_and_sum_dataset
 from scripts.data import get_apr_from_convex
 from scripts.data import get_bribes_data
+from scripts.data import get_convex_token_data
 from scripts.data import get_flyer_data
 from scripts.data import get_sett_roi_data
 from scripts.logconf import log
@@ -63,6 +64,15 @@ def update_setts_roi_gauge(
             ).set(source['minApr'])
             sett_roi_gauge.labels(
                 sett_name, source['name'], network, "maxApr").set(source['maxApr'])
+
+
+def update_convex_ecosystem_gauge(
+        crv_ecosystem_gauge: Gauge, crv_token_data: Dict,
+) -> None:
+    circulating_supply = crv_token_data['market_data']['circulating_supply']
+    supply_in_usd = circulating_supply * crv_token_data['market_data']['current_price']['usd']
+    crv_ecosystem_gauge.labels("crvCircSupply").set(circulating_supply)
+    crv_ecosystem_gauge.labels("crvCircSupplyUSD").set(supply_in_usd)
 
 
 def update_flyer_gauge(
@@ -117,6 +127,11 @@ def main():
         documentation="Bribes CVX data",
         labelnames=["pool", "round", "token", "param"],
     )
+    convex_ecosystem_gauge = Gauge(
+        name="convexEcosystem",
+        documentation="Convex ecosystem data",
+        labelnames=["param"]
+    )
     timer = 0
     while True:
         # For Llama API we shouln't update more than once per 10 minutes
@@ -140,6 +155,10 @@ def main():
         crvcvx_pools_data = get_apr_from_convex()
         if crvcvx_pools_data:
             update_crv_setts_roi_gauge(badger_sett_roi_gauge, crvcvx_pools_data)
+
+        crv_token_data = get_convex_token_data()
+        if crv_token_data:
+            update_convex_ecosystem_gauge(convex_ecosystem_gauge, crv_token_data)
 
         timer += UPDATE_CYCLE_SLEEP
         sleep(UPDATE_CYCLE_SLEEP)
