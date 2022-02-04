@@ -54,7 +54,10 @@ def update_setts_roi_gauge(
 ) -> None:
     reversed_addresses = reverse_addresses()[network]
     for sett in sett_data:
-        sett_name = reversed_addresses[sett['vaultToken']]
+        sett_name = reversed_addresses.get(sett['vaultToken'])
+        if not sett_name:
+            log.warning(f"Unknown address {sett['vaultToken']}")
+            continue
         sett_roi_gauge.labels(sett_name, "none", network, "ROI").set(sett['apr'])
         # Gather data for each Sett source separately now
         for source in sett['sources']:
@@ -100,6 +103,9 @@ def update_bribes_gauge(
         bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amountDollars").set(
             bribes['amountDollars']
         )
+        if not latest_epoch['bribed'].get(pool_name):
+            log.warning(f"No info can be obtained for bribed value from {pool_name}")
+            continue
         vl_cvx = bribes['amountDollars'] / latest_epoch['bribed'][pool_name]
         bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "$/vlCVX").set(
             vl_cvx
