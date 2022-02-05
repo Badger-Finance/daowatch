@@ -17,6 +17,7 @@ from scripts.addresses import reverse_addresses
 from scripts.data import aggregate_and_sum_dataset
 from scripts.data import get_apr_from_convex
 from scripts.data import get_bribes_data
+from scripts.data import get_convex_token_data
 from scripts.data import get_flyer_data
 from scripts.data import get_sett_roi_data
 from scripts.logconf import log
@@ -32,6 +33,8 @@ CVX_ADDRESSES = {
     **ADDRESSES['crv_3_pools'],
     **ADDRESSES['crv_stablecoin_pools'],
 }
+
+COINGECKO_TOKENS_TO_SCRAP = ["curve-dao-token", "convex-crv"]
 
 
 def update_crv_setts_roi_gauge(
@@ -55,7 +58,7 @@ def update_setts_roi_gauge(
     for sett in sett_data:
         try:
             sett_name = reversed_addresses[sett['vaultToken']]
-        except:
+        except Exception:
             sett_name = sett['name']
         sett_roi_gauge.labels(sett_name, "none", network, "ROI").set(sett['apr'])
         # Gather data for each Sett source separately now
@@ -66,6 +69,17 @@ def update_setts_roi_gauge(
             ).set(source['minApr'])
             sett_roi_gauge.labels(
                 sett_name, source['name'], network, "maxApr").set(source['maxApr'])
+
+
+def update_token_gauge(
+        token_gauge: Gauge, token_data: Dict, token: str,
+) -> None:
+    circulating_supply = token_data['market_data']['circulating_supply']
+    price_in_usd = token_data['market_data']['current_price']['usd']
+    supply_in_usd = circulating_supply * price_in_usd
+    token_gauge.labels(token, "priceUSD").set(price_in_usd)
+    token_gauge.labels(token, "circulatingSupply").set(circulating_supply)
+    token_gauge.labels(token, "circulatingSupplyUSD").set(supply_in_usd)
 
 
 def update_flyer_gauge(
@@ -93,6 +107,9 @@ def update_bribes_gauge(
         bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "amountDollars").set(
             bribes['amountDollars']
         )
+        if not latest_epoch['bribed'].get(pool_name):
+            log.warning(f"No info can be obtained for bribed value from {pool_name}")
+            continue
         vl_cvx = bribes['amountDollars'] / latest_epoch['bribed'][pool_name]
         bribes_gauge.labels(pool_name, latest_epoch['round'], bribes['token'], "$/vlCVX").set(
             vl_cvx
@@ -120,6 +137,11 @@ def main():
         documentation="Bribes CVX data",
         labelnames=["pool", "round", "token", "param"],
     )
+    token_gauge = Gauge(
+        name="tokenGauge",
+        documentation="Token data",
+        labelnames=["token", "param"]
+    )
     timer = 0
     while True:
         # For Llama API we shouln't update more than once per 10 minutes
@@ -143,6 +165,11 @@ def main():
         crvcvx_pools_data = get_apr_from_convex()
         if crvcvx_pools_data:
             update_crv_setts_roi_gauge(badger_sett_roi_gauge, crvcvx_pools_data)
+
+        for token in COINGECKO_TOKENS_TO_SCRAP:
+            token_data = get_convex_token_data(token)
+            if token_data:
+                update_token_gauge(token_gauge, token_data, token)
 
         timer += UPDATE_CYCLE_SLEEP
         sleep(UPDATE_CYCLE_SLEEP)

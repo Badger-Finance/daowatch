@@ -410,6 +410,17 @@ def get_bribes_data() -> Optional[Dict]:
     return bribes_data
 
 
+def get_convex_token_data(token: str) -> Optional[Dict]:
+    log.info(f"Fetching coingecko data for {token} token")
+    crv_data = get_json_request(
+        request_type="get", url=f"https://api.coingecko.com/api/v3/coins/{token}"
+    )
+    if not crv_data:
+        log.warning("Cannot fetch data from coingecko")
+        return
+    return crv_data
+
+
 TOKEN_TO_TREASURY_TOKEN_NAME_MAPPING = {
     'btc': "WTBC",
     'usd': "USDT",
