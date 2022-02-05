@@ -34,6 +34,8 @@ CVX_ADDRESSES = {
     **ADDRESSES['crv_stablecoin_pools'],
 }
 
+COINGECKO_TOKENS_TO_SCRAP = ["curve-dao-token", "convex-crv"]
+
 
 def update_crv_setts_roi_gauge(
     sett_roi_gauge: Gauge, sett_data: List[Dict]
@@ -69,13 +71,15 @@ def update_setts_roi_gauge(
                 sett_name, source['name'], network, "maxApr").set(source['maxApr'])
 
 
-def update_convex_ecosystem_gauge(
-        crv_ecosystem_gauge: Gauge, crv_token_data: Dict,
+def update_token_gauge(
+        token_gauge: Gauge, token_data: Dict, token: str,
 ) -> None:
-    circulating_supply = crv_token_data['market_data']['circulating_supply']
-    supply_in_usd = circulating_supply * crv_token_data['market_data']['current_price']['usd']
-    crv_ecosystem_gauge.labels("crvCircSupply").set(circulating_supply)
-    crv_ecosystem_gauge.labels("crvCircSupplyUSD").set(supply_in_usd)
+    circulating_supply = token_data['market_data']['circulating_supply']
+    price_in_usd = token_data['market_data']['current_price']['usd']
+    supply_in_usd = circulating_supply * price_in_usd
+    token_gauge.labels(token, "priceUSD").set(price_in_usd)
+    token_gauge.labels(token, "circulatingSupply").set(circulating_supply)
+    token_gauge.labels(token, "circulatingSupplyUSD").set(supply_in_usd)
 
 
 def update_flyer_gauge(
@@ -133,10 +137,10 @@ def main():
         documentation="Bribes CVX data",
         labelnames=["pool", "round", "token", "param"],
     )
-    convex_ecosystem_gauge = Gauge(
-        name="convexEcosystem",
-        documentation="Convex ecosystem data",
-        labelnames=["param"]
+    token_gauge = Gauge(
+        name="tokenGauge",
+        documentation="Token data",
+        labelnames=["token", "param"]
     )
     timer = 0
     while True:
@@ -162,9 +166,10 @@ def main():
         if crvcvx_pools_data:
             update_crv_setts_roi_gauge(badger_sett_roi_gauge, crvcvx_pools_data)
 
-        crv_token_data = get_convex_token_data()
-        if crv_token_data:
-            update_convex_ecosystem_gauge(convex_ecosystem_gauge, crv_token_data)
+        for token in COINGECKO_TOKENS_TO_SCRAP:
+            token_data = get_convex_token_data(token)
+            if token_data:
+                update_token_gauge(token_gauge, token_data, token)
 
         timer += UPDATE_CYCLE_SLEEP
         sleep(UPDATE_CYCLE_SLEEP)

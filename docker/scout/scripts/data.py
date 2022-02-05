@@ -410,13 +410,13 @@ def get_bribes_data() -> Optional[Dict]:
     return bribes_data
 
 
-def get_convex_token_data() -> Optional[Dict]:
-    log.info("Fetching coingecko data for CRV token")
+def get_convex_token_data(token: str) -> Optional[Dict]:
+    log.info(f"Fetching coingecko data for {token} token")
     crv_data = get_json_request(
-        request_type="get", url="https://api.coingecko.com/api/v3/coins/curve-dao-token"
+        request_type="get", url=f"https://api.coingecko.com/api/v3/coins/{token}"
     )
     if not crv_data:
-        log.warning("Cannot fetch crv data from coingecko")
+        log.warning("Cannot fetch data from coingecko")
         return
     return crv_data
 
