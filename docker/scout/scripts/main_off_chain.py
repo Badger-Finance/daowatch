@@ -54,10 +54,10 @@ def update_setts_roi_gauge(
 ) -> None:
     reversed_addresses = reverse_addresses()[network]
     for sett in sett_data:
-        sett_name = reversed_addresses.get(sett['vaultToken'])
-        if not sett_name:
-            log.warning(f"Unknown address {sett['vaultToken']}")
-            continue
+        try:
+            sett_name = reversed_addresses[sett['vaultToken']]
+        except Exception:
+            sett_name = sett['name']
         sett_roi_gauge.labels(sett_name, "none", network, "ROI").set(sett['apr'])
         # Gather data for each Sett source separately now
         for source in sett['sources']:
