@@ -1,6 +1,7 @@
 from brownie import chain
 from prometheus_client import Gauge
 from prometheus_client import start_http_server  # noqa
+from web3.exceptions import BlockNotFound
 
 from scripts.logconf import log
 
@@ -16,6 +17,11 @@ def main():
         labelnames=["chain"],
     )
     start_http_server(PROMETHEUS_PORT)
-    for step, block_data in enumerate(chain.new_blocks(height_buffer=1)):
-        log.info(block_data.number)
-        block_gauge.labels(NETWORK).set(block_data.number)
+    # Hack to keep container alive, because FTM RPC raises exceptions very often
+    while True:
+        try:
+            for step, block_data in enumerate(chain.new_blocks(height_buffer=1)):
+                log.info(f"Processing {block_data.number}")
+                block_gauge.labels(NETWORK).set(block_data.number)
+        except BlockNotFound:
+            continue
