@@ -29,6 +29,9 @@ scrape_configs:
   - job_name: "scout-off-chain"
     static_configs:
       - targets: [ "scout-off-chain:8801" ]
+  - job_name: "ftm-scout"
+    static_configs:
+      - targets: [ "ftm-scout:8801" ]
   - job_name: "arb-scout"
     static_configs:
       - targets: ["arb-collector:8801"]
