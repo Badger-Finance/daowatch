@@ -3,11 +3,17 @@ from prometheus_client import Gauge
 from prometheus_client import start_http_server  # noqa
 from web3.exceptions import BlockNotFound
 
+from scripts.addresses import ADDRESSES_FANTOM
+from scripts.addresses import checksum_address_dict
 from scripts.logconf import log
 
 PROMETHEUS_PORT = 8801
 
 NETWORK = "Fantom"
+
+# get all addresses
+ADDRESSES = checksum_address_dict(ADDRESSES_FANTOM)
+BADGER_WALLETS = ADDRESSES["badger_wallets"]
 
 
 def main():
