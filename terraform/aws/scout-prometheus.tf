@@ -21,7 +21,7 @@ resource "aws_ecs_task_definition" "prometheus" {
     jsondecode(module.prometheus-container-definition.json_map_encoded_list),
   jsondecode(module.scout-container-definition.json_map_encoded_list),
   jsondecode(module.arb-scout-container-definition.json_map_encoded_list),
-  jsondecode(module.scout-container-off-chain-definition.json_map_encoded_list)
+  jsondecode(module.scout-container-off-chain-definition.json_map_encoded_list),
   jsondecode(module.ftm-scout-container-definition.json_map_encoded_list)))
   family                   = "${var.app_name}-prometheus"
   requires_compatibilities = ["EC2"]
@@ -104,11 +104,10 @@ module "ftm-scout-container-definition" {
       awslogs-stream-prefix = "ftm-scout"
     }
   }
-
-  secrets = [
+  environment = [
     {
       name      = "FTMNODEURL"
-      valueFrom = var.arbnode_url_ssm_parameter_name
+      value = "https://rpc.ftm.tools" ##TODO hardcode with paid/better RPC
     }]
 }
 module "scout-container-off-chain-definition" {
