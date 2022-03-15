@@ -26,7 +26,7 @@ COINGECKO_TOKENS = ADDRESSES["coingecko_tokens"]
 WEB3_INSTANCE = Web3(Web3.HTTPProvider(os.environ['FTMNODEURL']))
 
 
-def get_token_prices(token_csv: str):
+def get_token_prices(token_csv: str) -> Dict:
     log.info("Fetching token prices from CoinGecko ...")
 
     url = (
