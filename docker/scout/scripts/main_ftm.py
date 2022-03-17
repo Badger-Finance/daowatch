@@ -26,6 +26,7 @@ COINGECKO_TOKENS = ADDRESSES["coingecko_tokens"]
 WEB3_INSTANCE = Web3(Web3.HTTPProvider(os.environ['FTMNODEURL']))
 
 
+# TODO: Price of each BAMM token is sum of USD values of each vault's underlying tokens:
 def get_token_prices(token_csv: str) -> Dict:
     log.info("Fetching token prices from CoinGecko ...")
 
