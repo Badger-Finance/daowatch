@@ -58,28 +58,28 @@ def update_wallets_gauge(
             wallet_address,
         ) = wallet.values()
 
-        eth_balance = float(WEB3_INSTANCE.fromWei(
+        ftm_balance = float(WEB3_INSTANCE.fromWei(
             WEB3_INSTANCE.eth.getBalance(wallet_address), "ether")
         )
         token_address = token_address.lower()
-        weth_address = COINGECKO_TOKENS['WETH'].lower()
+        wftm_address = COINGECKO_TOKENS['WFTM'].lower()
         # Amount of tokens in wallet
         wallets_gauge.labels(
             wallet_name, wallet_address, token_name, token_address, "balance"
         ).set(token_balance)
-        # Amount of ETH in wallet
+        # Amount of FTM in wallet
         wallets_gauge.labels(
-            wallet_name, wallet_address, "ETH", "None", "balance"
-        ).set(eth_balance)
+            wallet_name, wallet_address, "FTM", "None", "balance"
+        ).set(ftm_balance)
         # Token balance in dollars
         if token_prices.get(token_address) is not None:
             wallets_gauge.labels(
                 wallet_name, wallet_address, token_name, token_address, "usdBalance"
             ).set(token_balance * token_prices[token_address]['usd'])
-        # ETH balance in dollars
+        # FTM balance in dollars
         wallets_gauge.labels(
-            wallet_name, wallet_address, "ETH", "none", "usdBalance"
-        ).set(eth_balance * token_prices[weth_address]['usd'])
+            wallet_name, wallet_address, "FTM", "none", "usdBalance"
+        ).set(ftm_balance * token_prices[wftm_address]['usd'])
 
 
 def main():
