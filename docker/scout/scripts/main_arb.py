@@ -84,14 +84,6 @@ def update_price_gauge(
                 price_key = token_name
 
             price = token_prices[price_key]
-#               We already have coingecko pricing on eth.
-#            for countertoken in countertoken_csv.split(","):
-#              coingecko_price_gauge.labels(
-#                    "ETH" if fetched_name == "WETH"
-#                    else fetched_name,
-#                    token_address,
-#                    countertoken,
-#                ).set(price[countertoken])
 
             usd_prices_by_token_address[token_address] = price["usd"]
         else:
@@ -293,11 +285,6 @@ def main():
     block_gauge = Gauge(
         name="blocks",
         documentation="Info about blocks processed",
-    )
-    coingecko_price_gauge = Gauge(
-        name="coingecko_prices",
-        documentation="Token price data from Coingecko",
-        labelnames=["token", "tokenAddress", "countercurrency"],
     )
     lp_tokens_gauge = Gauge(
         name="lptokens",

@@ -333,7 +333,7 @@ def get_token_balance_data(wallets, token_name, token_address):
     )
 
 
-def get_wallet_balances_by_token(wallets, tokens):
+def get_wallet_balances_by_token(wallets, tokens) -> Dict:
     return {
         token_address: TokenBalance(
             wallets=wallets, name=token_name, token=interface.ERC20(token_address)
