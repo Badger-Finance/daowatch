@@ -1,11 +1,15 @@
 import os
+from typing import Dict
+from typing import Set
+from typing import Tuple
 
 from brownie import chain
+from brownie import interface  # noqa
 from prometheus_client import Gauge
 from prometheus_client import start_http_server  # noqa
-from typing import Dict
-from web3.exceptions import BlockNotFound
 from web3 import Web3
+from web3.exceptions import BlockNotFound
+
 from scripts.addresses import ADDRESSES_FANTOM
 from scripts.addresses import checksum_address_dict
 from scripts.data import get_json_request
@@ -21,12 +25,36 @@ ADDRESSES = checksum_address_dict(ADDRESSES_FANTOM)
 BADGER_WALLETS = ADDRESSES["badger_wallets"]
 TREASURY_TOKENS = ADDRESSES["treasury_tokens"]
 COINGECKO_TOKENS = ADDRESSES["coingecko_tokens"]
+LP_TOKENS = ADDRESSES["lp_tokens"]
 
 
 WEB3_INSTANCE = Web3(Web3.HTTPProvider(os.environ['FTMNODEURL']))
 
 
-# TODO: Price of each BAMM token is sum of USD values of each vault's underlying tokens:
+def parse_lp_tokens_to_underlying() -> Tuple[Dict, Set]:
+    """
+    Function that maps Sett token to underlying FTM tokens
+    """
+    lp_token_map = {}
+    all_underlying_tokens = set()
+    for pool_addr in LP_TOKENS.values():
+        pool = interface.Sett(pool_addr)
+        amm_interface = interface.UniV2Pair(pool.token())
+        reserves = amm_interface.getReserves()
+        token_0 = amm_interface.token0()
+        token_1 = amm_interface.token1()
+        token_0_interface = interface.ERC20(token_0)
+        token_1_interface = interface.ERC20(token_1)
+
+        lp_token_map[pool_addr] = {
+            token_0: reserves[0] / 10 ** token_0_interface.decimals(),
+            token_1: reserves[1] / 10 ** token_1_interface.decimals(),
+        }
+        all_underlying_tokens.add(token_0)
+        all_underlying_tokens.add(token_1)
+    return lp_token_map, all_underlying_tokens
+
+
 def get_token_prices(token_csv: str) -> Dict:
     log.info("Fetching token prices from CoinGecko ...")
 
@@ -93,15 +121,22 @@ def main():
         documentation="Watched wallet balances",
         labelnames=["walletName", "walletAddress", "token", "tokenAddress", "param"],
     )
-    token_csv = ",".join(COINGECKO_TOKENS.values())
     start_http_server(PROMETHEUS_PORT)
     # Hack to keep container alive, because FTM RPC raises exceptions very often
     while True:
         try:
             for step, block_data in enumerate(chain.new_blocks(height_buffer=1)):
-                log.info(f"Processing {block_data.number}")
-                token_prices = get_token_prices(token_csv)
                 block_gauge.labels(NETWORK).set(block_data.number)
+                log.info(f"Processing {block_data.number}")
+                # Get all AMM underlying tokens
+                lp_tokens_underlying_map, all_underlying_tokens = parse_lp_tokens_to_underlying()
+                # Get all tokens, including underlying tokens from AMM that needs to be
+                # fetched from coingecko
+                all_tokens = [*COINGECKO_TOKENS.values(), *all_underlying_tokens]
+                token_csv = ",".join(all_tokens)
+                # Get token prices from coingecko
+                token_prices = get_token_prices(token_csv)
+
                 wallet_balances_by_token = get_wallet_balances_by_token(
                     BADGER_WALLETS, TREASURY_TOKENS,
                 )
