@@ -1,7 +1,5 @@
-from web3 import Web3
 from rich.console import Console
-from typing import Dict
-
+from web3 import Web3
 
 ADDRESSES_ETH = {
     "zero": "0x0000000000000000000000000000000000000000",

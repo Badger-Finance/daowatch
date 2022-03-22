@@ -2,7 +2,6 @@ import os
 from typing import Dict
 
 from brownie import chain
-from brownie import interface  # noqa
 from prometheus_client import Gauge
 from prometheus_client import start_http_server  # noqa
 from web3 import Web3
@@ -92,10 +91,12 @@ def update_wallets_gauge(
             wallets_gauge.labels(
                 wallet_name, wallet_address, token_name, token_address, "usdBalance"
             ).set(token_balance * token_prices[token_address]['usd'])
-        elif token_prices_from_api.get(token_address.lower()) is not None:
+        # In case token is not found in coingecko resp, it means it's LP token and it's
+        # usd price should be taken from badger API response
+        elif token_prices_from_api.get(Web3.toChecksumAddress(token_address)) is not None:
             wallets_gauge.labels(
                 wallet_name, wallet_address, token_name, token_address, "usdBalance"
-            ).set(token_balance * token_prices_from_api[token_address])
+            ).set(token_balance * token_prices_from_api[Web3.toChecksumAddress(token_address)])
 
 
 def main():
@@ -121,7 +122,6 @@ def main():
                 token_prices = get_token_prices(gecko_token_csv)
                 # Get token prices from API. Needed to fetch info about LP tokens in USD
                 token_prices_from_api = get_token_prices_in_usd(CHAIN_FANTOM)
-                log.warning(token_prices_from_api)
                 wallet_balances_by_token = get_wallet_balances_by_token(
                     BADGER_WALLETS, TREASURY_TOKENS,
                 )
