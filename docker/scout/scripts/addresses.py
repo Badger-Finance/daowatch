@@ -663,12 +663,14 @@ def checksum_address_dict(addresses):
 CHAIN_ETH = "ETH"
 CHAIN_ARB = "ARB"
 CHAIN_MATIC = "POLYGON"
+CHAIN_FANTOM = "FTM"
 SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
 
 MAPPING_TO_SETT_API_CHAIN_PARAM = {
     CHAIN_ETH: "eth",
     CHAIN_ARB: "arbitrum",
     CHAIN_MATIC: "matic",
+    CHAIN_FANTOM: "fantom",
 }
 
 

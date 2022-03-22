@@ -1,7 +1,5 @@
 import os
 from typing import Dict
-from typing import Set
-from typing import Tuple
 
 from brownie import chain
 from brownie import interface  # noqa
@@ -11,8 +9,10 @@ from web3 import Web3
 from web3.exceptions import BlockNotFound
 
 from scripts.addresses import ADDRESSES_FANTOM
+from scripts.addresses import CHAIN_FANTOM
 from scripts.addresses import checksum_address_dict
 from scripts.data import get_json_request
+from scripts.data import get_token_prices_in_usd
 from scripts.data import get_wallet_balances_by_token
 from scripts.logconf import log
 
@@ -27,32 +27,7 @@ TREASURY_TOKENS = ADDRESSES["treasury_tokens"]
 COINGECKO_TOKENS = ADDRESSES["coingecko_tokens"]
 LP_TOKENS = ADDRESSES["lp_tokens"]
 
-
 WEB3_INSTANCE = Web3(Web3.HTTPProvider(os.environ['FTMNODEURL']))
-
-
-def parse_lp_tokens_to_underlying() -> Tuple[Dict, Set]:
-    """
-    Function that maps Sett token to underlying FTM tokens
-    """
-    lp_token_map = {}
-    all_underlying_tokens = set()
-    for pool_addr in LP_TOKENS.values():
-        pool = interface.Sett(pool_addr)
-        amm_interface = interface.UniV2Pair(pool.token())
-        reserves = amm_interface.getReserves()
-        token_0 = amm_interface.token0()
-        token_1 = amm_interface.token1()
-        token_0_interface = interface.ERC20(token_0)
-        token_1_interface = interface.ERC20(token_1)
-
-        lp_token_map[pool_addr] = {
-            token_0: reserves[0] / 10 ** token_0_interface.decimals(),
-            token_1: reserves[1] / 10 ** token_1_interface.decimals(),
-        }
-        all_underlying_tokens.add(token_0)
-        all_underlying_tokens.add(token_1)
-    return lp_token_map, all_underlying_tokens
 
 
 def get_token_prices(token_csv: str) -> Dict:
@@ -73,7 +48,15 @@ def update_wallets_gauge(
     token_name: str,
     token_address: str,
     token_prices: Dict,
+    token_prices_from_api: Dict,
 ) -> None:
+    """
+    Function that updates wallets gauge;
+    It updates both token balances and balances in USD.
+
+    token_prices_from_api is used to obtain USD price for lp tokens such as BSMM_WBTC_RENBTC,
+    because it's tricky to calculate them using contract and FTM RPC is slow
+    """
     log.info(f"Processing wallet balances for [bold]{token_name}: {token_address} ...")
 
     wallet_info = wallet_balances_by_token[token_address]
@@ -99,15 +82,20 @@ def update_wallets_gauge(
         wallets_gauge.labels(
             wallet_name, wallet_address, "FTM", "None", "balance"
         ).set(ftm_balance)
+        # USD BALANCES
+        # FTM balance in dollars
+        wallets_gauge.labels(
+            wallet_name, wallet_address, "FTM", "none", "usdBalance"
+        ).set(ftm_balance * token_prices[wftm_address]['usd'])
         # Token balance in dollars
         if token_prices.get(token_address) is not None:
             wallets_gauge.labels(
                 wallet_name, wallet_address, token_name, token_address, "usdBalance"
             ).set(token_balance * token_prices[token_address]['usd'])
-        # FTM balance in dollars
-        wallets_gauge.labels(
-            wallet_name, wallet_address, "FTM", "none", "usdBalance"
-        ).set(ftm_balance * token_prices[wftm_address]['usd'])
+        elif token_prices_from_api.get(token_address.lower()) is not None:
+            wallets_gauge.labels(
+                wallet_name, wallet_address, token_name, token_address, "usdBalance"
+            ).set(token_balance * token_prices_from_api[token_address])
 
 
 def main():
@@ -122,21 +110,18 @@ def main():
         labelnames=["walletName", "walletAddress", "token", "tokenAddress", "param"],
     )
     start_http_server(PROMETHEUS_PORT)
+    gecko_token_csv = ",".join(COINGECKO_TOKENS.values())
     # Hack to keep container alive, because FTM RPC raises exceptions very often
     while True:
         try:
             for step, block_data in enumerate(chain.new_blocks(height_buffer=1)):
                 block_gauge.labels(NETWORK).set(block_data.number)
                 log.info(f"Processing {block_data.number}")
-                # Get all AMM underlying tokens
-                lp_tokens_underlying_map, all_underlying_tokens = parse_lp_tokens_to_underlying()
-                # Get all tokens, including underlying tokens from AMM that needs to be
-                # fetched from coingecko
-                all_tokens = [*COINGECKO_TOKENS.values(), *all_underlying_tokens]
-                token_csv = ",".join(all_tokens)
                 # Get token prices from coingecko
-                token_prices = get_token_prices(token_csv)
-
+                token_prices = get_token_prices(gecko_token_csv)
+                # Get token prices from API. Needed to fetch info about LP tokens in USD
+                token_prices_from_api = get_token_prices_in_usd(CHAIN_FANTOM)
+                log.warning(token_prices_from_api)
                 wallet_balances_by_token = get_wallet_balances_by_token(
                     BADGER_WALLETS, TREASURY_TOKENS,
                 )
@@ -148,6 +133,7 @@ def main():
                         token_name,
                         token_address,
                         token_prices,
+                        token_prices_from_api,
                     )
         except BlockNotFound:
             continue

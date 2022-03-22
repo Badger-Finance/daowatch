@@ -388,6 +388,18 @@ def get_sett_roi_data(network: Optional[str] = "ETH") -> Optional[List[Dict]]:
     return setts_data
 
 
+def get_token_prices_in_usd(network: str) -> Optional[Dict]:
+    log.info("Fetching token prices from Badger API")
+    chain = MAPPING_TO_SETT_API_CHAIN_PARAM[network]
+    token_prices = get_json_request(
+        request_type="get", url=f"https://api.badger.finance/v2/prices?chain={chain}&currency=usd"
+    )
+    if not token_prices:
+        log.warning("Cannot token prices data from Badger API")
+        return
+    return token_prices
+
+
 def get_flyer_data() -> Optional[Dict]:
     log.info("Fetching Flyer data")
     flyer_data = get_json_request(
