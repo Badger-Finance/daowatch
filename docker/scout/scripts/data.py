@@ -403,7 +403,7 @@ def get_token_prices_in_usd(network: str) -> Optional[Dict]:
 def get_flyer_data() -> Optional[Dict]:
     log.info("Fetching Flyer data")
     flyer_data = get_json_request(
-        request_type="get", url="https://api.llama.airforce/flyer"
+        request_type="get", url="https://api2.llama.airforce/flyer"
     )
     if not flyer_data:
         log.warning("Cannot fetch flyer data")
@@ -414,7 +414,7 @@ def get_flyer_data() -> Optional[Dict]:
 def get_bribes_data() -> Optional[Dict]:
     log.info("Fetching Bribes data")
     bribes_data = get_json_request(
-        request_type="get", url="https://api.llama.airforce/bribes"
+        request_type="get", url="https://api2.llama.airforce/bribes"
     )
     if not bribes_data:
         log.warning("Cannot fetch bribes data")
