@@ -1,21 +1,17 @@
 resource "aws_ecr_repository" "prometheus" {
   count = var.create_ecr == true ? 1 : 0
-  name = "prometheus"
+  name = "${var.app_name}_prometheus"
 }
 resource "aws_ecr_repository" "scout" {
   count = var.create_ecr == true ? 1 : 0
-  name = "scout"
+  name = "${var.app_name}_scout"
 }
 resource "aws_ecr_repository" "grafana" {
   count = var.create_ecr == true ? 1 : 0
-  name = "grafana"
+  name = "${var.app_name}_grafana"
 }
 locals {
   all_repo_arns = var.create_ecr ? [aws_ecr_repository.grafana[0].arn, aws_ecr_repository.scout[0].arn, aws_ecr_repository.prometheus[0].arn] : []
-}
-resource "aws_iam_user" "scout-deployer" {
-  count = var.create_ecr == true ? 1 :0
-  name = "${var.app_name}-deployer"
 }
 data "aws_iam_policy_document" "scout-reader" {
   statement {
@@ -65,25 +61,4 @@ resource "aws_iam_policy" "scout-reader" {
   lifecycle {
     create_before_destroy = true
   }
-}
-resource "aws_iam_user_policy_attachment" "scout-deployer" {
-  count = var.create_ecr == true ? 1 :0
-  policy_arn = aws_iam_policy.scout-deployer[0].arn
-  user = aws_iam_user.scout-deployer[0].name
-}
-resource "aws_iam_access_key" "scout-deployer" {
-  count = var.create_ecr == true ? 1 :0
-  user = aws_iam_user.scout-deployer[0].name
-}
-resource "aws_ssm_parameter" "scout-deployer-access-key" {
-  count = var.create_ecr == true ? 1 :0
-  name = "${var.ssm_base}/terraform-out/scout-deployer-aws-access-key"
-  type = "String"
-  value = aws_iam_access_key.scout-deployer[0].id
-}
-resource "aws_ssm_parameter" "scout-deployer-access-secret" {
-  count = var.create_ecr == true ? 1 :0
-  name = "${var.ssm_base}/terraform-out/scout-deployer-aws-access-secret"
-  type = "String"
-  value = aws_iam_access_key.scout-deployer[0].secret
 }
