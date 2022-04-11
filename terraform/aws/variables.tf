@@ -132,3 +132,18 @@ variable "home_dashboard_path" {
   default = "/etc/grafana/dashboards/homepage.json"
   description = "The path on the server to dashboard json that will be used as the homepage."
 }
+
+variable "alert_discord_notifier_webhook_ssm_name" {
+  type=string
+  default = "/DevOps4DeFi/discord_default_grafana_notifier_webhook_url"
+}
+variable "warning_discord_notifier_webhook_ssm_name" {
+  type=string
+  default = "/DevOps4DeFi/discord_default_grafana_notifier_webhook_url"
+}
+
+variable "github_oauth_client_id_ssm" {
+}
+variable "github_oauth_client_secret_ssm" {
+
+}

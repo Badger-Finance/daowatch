@@ -57,7 +57,24 @@ module "grafana-container-definition" {
     {
       name = "GF_SECURITY_ADMIN_PASSWORD"
       valueFrom = var.grafana_admin_password_ssm_name
+    },
+    {
+      name = "ALERT_DISCORD_NOTIFIER_WEBHOOK"
+      valueFrom = var.alert_discord_notifier_webhook_ssm_name
+    },
+    {
+      name = "WARNING_DISCORD_NOTIFIER_WEBHOOK"
+      valueFrom = var.warning_discord_notifier_webhook_ssm_name
+    },
+    {
+      name = "GF_AUTH_GITHUB_CLIENT_ID"
+      valueFrom = var.github_oauth_client_id_ssm
+    },
+    {
+      name = "GF_AUTH_GITHUB_CLIENT_SECRET"
+      valueFrom = var.github_oauth_client_secret_ssm
     }
+
   ]
   environment = [
     {
@@ -107,7 +124,6 @@ module "grafana-container-definition" {
       name = "GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH"
       value= var.home_dashboard_path
     }
-
   ]
   port_mappings = [
     {
