@@ -90,7 +90,7 @@ module "arb-scout-container-definition" {
 }
 module "ftm-scout-container-definition" {
   source                       = "cloudposse/ecs-container-definition/aws"
-  version                      = "0.47.0"
+#  version                      = "0.47.0"
   container_image              = local.scout_docker_image ## TODO make optional
   container_name               = "ftm-scout"
   essential                    = false ## TODO change to true when stable
@@ -104,6 +104,7 @@ module "ftm-scout-container-definition" {
       awslogs-stream-prefix = "ftm-scout"
     }
   }
+
   environment = [
     {
       name      = "FTMNODEURL"
