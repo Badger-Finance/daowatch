@@ -1,0 +1,16 @@
+notifiers:
+  - name: discord-badger-dev-scout-warnings
+    org_id: 1
+    org_name: Main Org.
+    uid: badgerdev-discord-scoutwarning
+    type: discord
+    isDefault: false
+    sendReminder: false
+    disableResolveMessage: true
+    frequency: 4h
+    settings:
+      autoResolve: true
+      httpMethod: POST
+      severity: warning
+      uploadImage: true
+      url: ${WARNING_DISCORD_NOTIFIER_WEBHOOK}
