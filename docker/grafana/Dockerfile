@@ -1,4 +1,4 @@
-FROM grafana/grafana:8.0.6-ubuntu
+FROM grafana/grafana:8.3.4-ubuntu
 
 # Disable Login form or not
 ENV GF_AUTH_DISABLE_LOGIN_FORM=false
