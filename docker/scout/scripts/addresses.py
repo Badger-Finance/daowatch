@@ -65,8 +65,9 @@ ADDRESSES_ETH = {
         "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
         "techOpsProxyAdmin": "0x7D0398D7D7432c47Dffc942Cd097B9eA3d88C385",
     },
-    #Scout stores prices for all tokens here, either from coingecko or interpolation
-    # Any token here that does not have a coingeco price must be included in sett_vaults, lp_tokens or crvpools
+    # Scout stores prices for all tokens here, either from coingecko or interpolation
+    # Any token here that does not have a coingeco price must be included
+    # in sett_vaults, lp_tokens or crvpools
     # or one of the crv_ lists in order to have it's price calculated and not break scout.
     "treasury_tokens": {
         "FARM": "0xa0246c9032bC3A600820415aE600c6388619A14D",
@@ -74,6 +75,7 @@ ADDRESSES_ETH = {
         "ibBTC": "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
         "wibBTC": "0x8751D4196027d4e6DA63716fA7786B5174F04C15",
         "AURA": "0xc0c293ce456ff0ed870add98a0828dd4d2903dbf",
+        "auraBAL": "0x616e8bfa43f920657b3497dbf40d6b1a02d4608d",
         "DIGG": "0x798D1bE841a82a273720CE31c822C61a67a601C3",
         "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
