@@ -12,7 +12,8 @@ ADDRESSES_ETH = {
     "guardian": "0x6615e67b8B6b6375D38A0A3f937cd8c1a1e96386",
     "GatedMiniMeController": "0xdDB2dfad74F64F14bb1A1cbaB9C03bc0eed74493",
     "AuraMerkleDrop": "0x45EB1A004373b1D8457134A2C04a42d69D287724",
-    ### The wallets listed here are looped over by scout and checked for all treasury tokens
+    "AuraLocker": "0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC",
+    # The wallets listed here are looped over by scout and checked for all treasury tokens
     "badger_wallets": {
         "fees": "0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B",
         "team": "0xe4aa1d8aaf8a50422bc5c7310deb1262d1f6f657",

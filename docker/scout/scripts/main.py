@@ -494,8 +494,10 @@ def update_cycle_gauge(cycle_gauge, last_cycle_unixtime):
 def update_aura_info_gauge(aura_gauge: Gauge, aura_token) -> None:
     # Amount of aura in Airdrop contract
     aura_gauge.labels("aura_airdrop_amount").set(
-        aura_token.balanceOf(ADDRESSES_ETH['AuraMerkleDrop']) / 1e18
+        aura_token.balanceOf(ADDRESSES['AuraMerkleDrop']) / 1e18
     )
+    aura_locker = interface.AuraLocker(ADDRESSES['AuraLocker'])
+    aura_gauge.labels("locked_aura_amount").set(aura_locker.lockedSupply() / 1e18)
 
 
 def main():
