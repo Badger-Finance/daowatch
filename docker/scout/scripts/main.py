@@ -491,6 +491,13 @@ def update_cycle_gauge(cycle_gauge, last_cycle_unixtime):
         cycle_gauge.labels(param).set(value)
 
 
+def update_aura_info_gauge(aura_gauge: Gauge, aura_token) -> None:
+    # Amount of aura in Airdrop contract
+    aura_gauge.labels("aura_airdrop_amount").set(
+        aura_token.balanceOf(ADDRESSES_ETH['AuraMerkleDrop']) / 1e18
+    )
+
+
 def main():
     # set up prometheus
     log.info(
@@ -564,7 +571,11 @@ def main():
         documentation="Peak Sett composition",
         labelnames=["peakName", "peakAddress", "token", "tokenAddress", "param"],
     )
-
+    aura_gauge = Gauge(
+        name="aura_info",
+        documentation="Aura token data",
+        labelnames=["param"],
+    )
     start_http_server(PROMETHEUS_PORT)
 
     # get all data
@@ -643,7 +654,8 @@ def main():
             update_lp_tokens_gauge(
                 lp_tokens_gauge, lp_tokens, lp_token, token_interfaces
             )
-
+        aura_token = token_interfaces[treasury_tokens['AURA']]
+        update_aura_info_gauge(aura_gauge, aura_token)
         # process curve pool data
         for pool_name, pool_address in CRV_POOLS_WITH_CRV_STABLECOIN_POOLS.items():
             update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address)

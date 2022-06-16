@@ -11,6 +11,7 @@ ADDRESSES_ETH = {
     "keeperAccessControl": "0x711A339c002386f9db409cA55b6A35a604aB6cF6",
     "guardian": "0x6615e67b8B6b6375D38A0A3f937cd8c1a1e96386",
     "GatedMiniMeController": "0xdDB2dfad74F64F14bb1A1cbaB9C03bc0eed74493",
+    "AuraMerkleDrop": "0x45EB1A004373b1D8457134A2C04a42d69D287724",
     ### The wallets listed here are looped over by scout and checked for all treasury tokens
     "badger_wallets": {
         "fees": "0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B",
@@ -71,6 +72,7 @@ ADDRESSES_ETH = {
         "BADGER": "0x3472A5A71965499acd81997a54BBA8D852C6E53d",
         "ibBTC": "0xc4E15973E6fF2A35cC804c2CF9D2a1b817a8b40F",
         "wibBTC": "0x8751D4196027d4e6DA63716fA7786B5174F04C15",
+        "AURA": "0xc0c293ce456ff0ed870add98a0828dd4d2903dbf",
         "DIGG": "0x798D1bE841a82a273720CE31c822C61a67a601C3",
         "USDT": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         "USDC": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
