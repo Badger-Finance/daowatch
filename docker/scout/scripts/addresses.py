@@ -797,6 +797,21 @@ ADDRESSES_RINKEBY = {
     },
 }
 
+# Excluding BSC since all Setts there are marked as deprecated
+CHAIN_ETH = "ETH"
+CHAIN_ARB = "ARB"
+CHAIN_MATIC = "POLYGON"
+CHAIN_FANTOM = "FTM"
+SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
+
+MAPPING_TO_SETT_API_CHAIN_PARAM = {
+    CHAIN_ETH: "eth",
+    CHAIN_ARB: "arbitrum",
+    CHAIN_MATIC: "matic",
+    CHAIN_FANTOM: "fantom",
+}
+
+
 
 def checksum_address_dict(addresses):
     """
@@ -813,53 +828,15 @@ def checksum_address_dict(addresses):
     return checksummed
 
 
-with open('helpers/chaindata.json') as chaindata:
-    chain_ids = json.load(chaindata)
+def reverse_addresses() -> dict:
+    results = {}
+    checksummed_addr_eth = checksum_address_dict(ADDRESSES_ETH)
+    checksummed_addr_arb = checksum_address_dict(ADDRESSES_ARBITRUM)
+    checksummed_addr_polygon = checksum_address_dict(ADDRESSES_POLYGON)
+    results[CHAIN_ETH] = {v: k for k, v in checksummed_addr_eth['sett_vaults'].items()}
+    results[CHAIN_ETH][Web3.toChecksumAddress('0x4b92d19c11435614CD49Af1b589001b7c08cD4D5')] \
+        = "byvWBTC"
+    results[CHAIN_MATIC] = {v: k for k, v in checksummed_addr_polygon['sett_vaults'].items()}
+    results[CHAIN_ARB] = {v: k for k, v in checksummed_addr_arb['sett_vaults'].items()}
+    return results
 
-
-registry = DotMap({
-    "eth": checksum_address_dict(ADDRESSES_ETH),
-    "ibbtc": checksum_address_dict(ADDRESSES_IBBTC),
-    "bsc": checksum_address_dict(ADDRESSES_BSC),
-    "bridge": checksum_address_dict(ADDRESSES_BRIDGE),
-    "poly": checksum_address_dict(ADDRESSES_POLYGON),
-    "arbitrum": checksum_address_dict(ADDRESSES_ARBITRUM),
-    "rinkeby": checksum_address_dict(ADDRESSES_RINKEBY),
-})
-
-# Excluding BSC since all Setts there are marked as deprecated
-CHAIN_ETH = "ETH"
-CHAIN_ARB = "ARB"
-CHAIN_MATIC = "POLYGON"
-CHAIN_FANTOM = "FTM"
-SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
-
-MAPPING_TO_SETT_API_CHAIN_PARAM = {
-    CHAIN_ETH: "eth",
-    CHAIN_ARB: "arbitrum",
-    CHAIN_MATIC: "matic",
-    CHAIN_FANTOM: "fantom",
-}
-
-
-def get_registry():
-    if chain.id == 1:
-        return registry.eth
-    elif chain.id == 137:
-        return registry.poly
-    elif chain.id == 56:
-        return registry.bsc
-    elif chain.id == 42161:
-        return registry.arbitrum
-    elif chain.id == 250:
-        return registry.ftm
-    elif chain.id == 42:
-        return registry.kovan
-
-
-r = get_registry()
-
-# flatten nested dicts and invert the resulting key <-> value
-# this allows for reversed lookup of an address
-df = pd.json_normalize(registry, sep="_")
-reverse = df.T.reset_index().set_index(0)["index"].to_dict()
