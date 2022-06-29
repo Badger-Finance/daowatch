@@ -557,6 +557,11 @@ def main():
         documentation="Badger Sett vaults data",
         labelnames=["sett", "tokenAddress", "token", "param"],
     )
+    wallets_gauge = Gauge(
+        name="wallets",
+        documentation="Watched wallet balances",
+        labelnames=["walletName", "walletAddress", "token", "tokenAddress", "param"],
+    )
     xchain_bridge_gauge = Gauge(
         name="xchainBridge",
         documentation="Info about tokens in custody",
