@@ -510,6 +510,7 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
     # Add vlAURA amount
     convex_locker = interface.ConvexLocker(ADDRESSES['convexLocker'])
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
+    convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() /1e18)
     # Add auraBAL total supply
     convex_gauge.labels("cvxcrv_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
@@ -556,11 +557,6 @@ def main():
         documentation="Badger Sett vaults data",
         labelnames=["sett", "tokenAddress", "token", "param"],
     )
-    wallets_gauge = Gauge(
-        name="wallets",
-        documentation="Watched wallet balances",
-        labelnames=["walletName", "walletAddress", "token", "tokenAddress", "param"],
-    )
     xchain_bridge_gauge = Gauge(
         name="xchainBridge",
         documentation="Info about tokens in custody",
@@ -599,6 +595,7 @@ def main():
         documentation="convex token data",
         labelnames=["param"],
     )
+
     start_http_server(PROMETHEUS_PORT)
 
     # get all data
