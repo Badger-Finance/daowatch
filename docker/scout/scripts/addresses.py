@@ -1,5 +1,4 @@
 import pandas as pd
-
 from brownie import chain
 from dotmap import DotMap
 from web3 import Web3
