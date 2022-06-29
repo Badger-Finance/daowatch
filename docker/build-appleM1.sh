@@ -8,7 +8,7 @@ time_tag=`date '+%Y%m%d%H%M%S'`
 for app in grafana prometheus scout
 do
   aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URL
-  docker buildx build --platform linux/amd64,linux/arm64 -t $ECR_URL/daowatch_$app:$time_tag -t $ECR_URL/daowatch_$app:latest ./$app
+  docker buildx build --platform linux/amd64-t $ECR_URL/daowatch_$app:$time_tag -t $ECR_URL/daowatch_$app:latest ./$app
   docker push  $ECR_URL/daowatch_$app:$time_tag
   docker push  $ECR_URL/daowatch_$app:latest
 done
