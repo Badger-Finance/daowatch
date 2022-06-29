@@ -512,6 +512,7 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
     convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() /1e18)
     # Add auraBAL total supply
+    convex_gauge.labels("CVX_locker_CVX_balance").set(convex_token.balanceOf(ADDRESSES['convexLocker']))
     convex_gauge.labels("cvxcrv_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
 
@@ -596,7 +597,7 @@ def main():
         labelnames=["param"],
     )
     convex_gauge = Gauge(
-        name="convex_info",
+        name="convex_locking",
         documentation="convex token data",
         labelnames=["param"],
     )
@@ -685,8 +686,8 @@ def main():
         update_aura_info_gauge(aura_gauge, aura_token, aura_bal_token)
 
         ## General Covex data (lockers)
-        convex_token = token_interfaces[treasury_tokens['AURA']]
-        cvxcrv_token = token_interfaces[treasury_tokens['auraBAL']]
+        convex_token = token_interfaces[treasury_tokens['CVX']]
+        cvxcrv_token = token_interfaces[treasury_tokens['cvxCRV']]
         update_convex_info_gauge(convex_gauge, convex_token, cvxcrv_token)
 
         # process curve pool data
