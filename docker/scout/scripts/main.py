@@ -288,7 +288,9 @@ def update_crv_meta_tokens_gauge(
 def update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens):
     sett_name = sett.name
     sett_address = sett_vaults[sett_name]
-    sett_token_name = sett_name[1:]
+    sett_token_name = re.sub("^b", "", sett.name) #bveCVX
+    sett_token_name = re.sub("^gravi", "", sett_token_name) #remBADGER and DIGG
+    sett_token_name = re.sub("^rem", "", sett_token_name) #graviAURA
     sett_token_name = re.sub("harvest", "", sett_token_name) #harvest sett
     sett_token_name = re.sub("bbveCVX-CVX-f", "CVX", sett_token_name) #bveCVX LP
     sett_token_name = re.sub("^ve", "", sett_token_name) #bveCVX
@@ -498,9 +500,20 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
     )
     # Add vlAURA amount
     aura_locker = interface.AuraLocker(ADDRESSES['AuraLocker'])
-    aura_gauge.labels("locked_aura_amount").set(aura_locker.lockedSupply() / 1e18)
+    aura_gauge.labels("AURA_locked").set(aura_locker.lockedSupply() / 1e18)
     # Add auraBAL total supply
     aura_gauge.labels("aura_bal_total_supply").set(aura_bal_token.totalSupply() / 1e18)
+
+
+
+def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) -> None:
+    # Add vlAURA amount
+    convex_locker = interface.ConvexLocker(ADDRESSES['convexLocker'])
+    convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
+    # Add auraBAL total supply
+    convex_gauge.labels("cvxcrv_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
+    convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
+
 
 
 def main():
@@ -581,6 +594,11 @@ def main():
         documentation="Aura token data",
         labelnames=["param"],
     )
+    convex_gauge = Gauge(
+        name="convex_info",
+        documentation="convex token data",
+        labelnames=["param"],
+    )
     start_http_server(PROMETHEUS_PORT)
 
     # get all data
@@ -659,9 +677,16 @@ def main():
             update_lp_tokens_gauge(
                 lp_tokens_gauge, lp_tokens, lp_token, token_interfaces
             )
+        ## General Aura data (lockers)
         aura_token = token_interfaces[treasury_tokens['AURA']]
         aura_bal_token = token_interfaces[treasury_tokens['auraBAL']]
         update_aura_info_gauge(aura_gauge, aura_token, aura_bal_token)
+
+        ## General Covex data (lockers)
+        convex_token = token_interfaces[treasury_tokens['AURA']]
+        cvxcrv_token = token_interfaces[treasury_tokens['auraBAL']]
+        update_convex_info_gauge(convex_gauge, convex_token, cvxcrv_token)
+
         # process curve pool data
         for pool_name, pool_address in CRV_POOLS_WITH_CRV_STABLECOIN_POOLS.items():
             update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address)
