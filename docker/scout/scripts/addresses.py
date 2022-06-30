@@ -180,6 +180,7 @@ ADDRESSES_ETH = {
         "ANGLE": "0x31429d1856aD1377A8A0079410B297e1a9e214c2",
         "remBADGER": "0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22",
         "remDIGG": "0x99F39D495C6A5237f43602f3Ab5F49786E46c9B0",
+        "pxCVX": "0xBCe0Cf87F513102F22232436CCa2ca49e815C3aC",
 
     },
     # every slp token listed in treasury tokens above must also be listed here.

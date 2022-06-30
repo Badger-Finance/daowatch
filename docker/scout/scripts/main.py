@@ -502,8 +502,8 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
     aura_locker = interface.AuraLocker(ADDRESSES['AuraLocker'])
     aura_gauge.labels("AURA_locked").set(aura_locker.lockedSupply() / 1e18)
     # Add auraBAL total supply
-    aura_gauge.labels("locker_totalSupply").set(aura_locker.totalSupply() / 1e18)
-    aura_gauge.labels("locker_AURA_balance").set(aura_token.balanceOf(ADDRESSES['convexLocker']) / 1e18)
+    aura_gauge.labels("AURA_locker_totalSupply").set(aura_locker.totalSupply() / 1e18)
+    aura_gauge.labels("AURA_balance").set(aura_token.balanceOf(ADDRESSES['AuraLocker']) / 1e18)
     aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18)
 
 
@@ -511,11 +511,15 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
 def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) -> None:
     # Add vlAURA amount
     convex_locker = interface.ConvexLocker(ADDRESSES['convexLocker'])
+    pxCVX = interface.ConvexLocker(treasury_tokens['pxCVX'])
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
     convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() / 1e18)
     # Add auraBAL total supply
     convex_gauge.labels("cvxCRV_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
+    convex_gauge.labels("CVX_balance").set(convex_token.balanceOf(ADDRESSES['convexLocker']) / 1e18)
+    convex_gauge.labels("pxCVX_total_supply").set(pxCVX.totalSupply() / 1e18)
+
 
 
 
