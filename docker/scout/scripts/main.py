@@ -511,6 +511,7 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
 def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) -> None:
     # Add vlAURA amount
     convex_locker = interface.ConvexLocker(ADDRESSES['convexLocker'])
+    epoch = convex_locker.epochCount()
     pxCVX = interface.ConvexLocker(treasury_tokens['pxCVX'])
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
     convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() / 1e18)
@@ -519,8 +520,8 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
     convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_balance").set(convex_token.balanceOf(ADDRESSES['convexLocker']) / 1e18)
     convex_gauge.labels("pxCVX_total_supply").set(pxCVX.totalSupply() / 1e18)
-
-
+    convex_gauge.labels("CVX_epoch_total_supply_this_week").set(convex_locker.totalSupplyAtEpoch(epoch - 2) / 1e18)
+    convex_gauge.labels("CVX_epoch_total_supply_next_week").set(convex_locker.totalSupplyAtEpoch(epoch - 1) / 1e18)
 
 
 def main():
