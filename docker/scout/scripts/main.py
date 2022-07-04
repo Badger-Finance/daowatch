@@ -541,7 +541,7 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
     # Add auraBAL total supply
     aura_gauge.labels("AURA_locker_totalSupply").set(aura_locker.totalSupply() / 1e18)
     aura_gauge.labels("AURA_balance").set(aura_token.balanceOf(ADDRESSES['AuraLocker']) / 1e18)
-    aura_gauge.labels("AURA_minted_per_bal_earned").set( ((500 - (aura_token.totalSupply() - 50000000) / 100000) * 2.5 + 700) / 500 )
+    aura_gauge.labels("AURA_minted_per_bal_earned").set( ((500 - ((aura_token.totalSupply()/aura_token.decimals()) - 50000000) / 100000) * 2.5 + 700) / 500 )
     aura_gauge.labels("AURA_totalSupply").set(aura_token.totalSupply() / 1e18) ## TODO remove when in coingecko
     aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18) ## TODO remove when in coingecko and update Aura locking dashboard
 
