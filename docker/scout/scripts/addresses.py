@@ -166,7 +166,8 @@ ADDRESSES_ETH = {
         "bveCVX": "0xfd05D3C7fe2924020620A8bE4961bBaA747e6305",
         "yvWBTC": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",  ##TODO NO COINGECKO PRICE
         "aBADGER": "0x43298F9f91a4545dF64748e78a2c777c580573d6",
-        "badgerWBTC_f": "0x137469B55D1f15651BA46A89D0588e97dD0B6562",
+        "pxCVXCVX_f": "0x137469B55D1f15651BA46A89D0588e97dD0B6562",
+        "badgerWBTC_f": "0xaCe78D9BaB82b6B4783120Dba82aa10B040A14D9",
         "EURS": "0xdB25f211AB05b1c97D595516F45794528a807ad8",
         "crv3eur": "0xb9446c4Ef5EBE66268dA6700D26f96273DE3d571",
         "FTM": "0x4E15361FD6b4BB609Fa63C81A2be19d873717870",
@@ -180,6 +181,7 @@ ADDRESSES_ETH = {
         "ANGLE": "0x31429d1856aD1377A8A0079410B297e1a9e214c2",
         "remBADGER": "0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22",
         "remDIGG": "0x99F39D495C6A5237f43602f3Ab5F49786E46c9B0",
+        "pxCVX": "0xBCe0Cf87F513102F22232436CCa2ca49e815C3aC",
 
     },
     # every slp token listed in treasury tokens above must also be listed here.
@@ -229,8 +231,9 @@ ADDRESSES_ETH = {
     },
     "crv_factory_pools": {
         "badgerWBTC_f": "0x50f3752289e1456BfA505afd37B241bca23e685d",
-        "t_eth_f": "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",
-        "cvx_eth_f": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+        "pxCVXCVX_f": "0xF3456E8061461e144b3f252E69DcD5b6070fdEE0",
+#        "t_eth_f": "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",
+#        "cvx_eth_f": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
     },
     # mStable want tokens
 
@@ -482,6 +485,11 @@ ADDRESSES_ETH = {
         "bpt_aurabal": "0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd",
         "bpt_33_grav_33_weth_33_aura": "0xA3283E3470D3CD1F18C074E3f2d3965F6D62fFF2",
         "bpt_33_grav_33_weth_33_aurabal": "0x0578292CB20a443bA1CdE459c985CE14Ca2bDEe5",
+    },
+    "balancer_bpt": {
+        "B_20_BTC_80_BADGER": "0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36",
+        "B_80_BAL_20_WETH": "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56",
+        "Bstable_auraBAL": "0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd",
     },
     "hidden_hand": {
         "bribe_vault": "0x9DDb2da7Dd76612e0df237B89AF2CF4413733212",
@@ -797,6 +805,21 @@ ADDRESSES_RINKEBY = {
     },
 }
 
+# Excluding BSC since all Setts there are marked as deprecated
+CHAIN_ETH = "ETH"
+CHAIN_ARB = "ARB"
+CHAIN_MATIC = "POLYGON"
+CHAIN_FANTOM = "FTM"
+SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
+
+MAPPING_TO_SETT_API_CHAIN_PARAM = {
+    CHAIN_ETH: "eth",
+    CHAIN_ARB: "arbitrum",
+    CHAIN_MATIC: "matic",
+    CHAIN_FANTOM: "fantom",
+}
+
+
 
 def checksum_address_dict(addresses):
     """
@@ -813,53 +836,15 @@ def checksum_address_dict(addresses):
     return checksummed
 
 
-with open('helpers/chaindata.json') as chaindata:
-    chain_ids = json.load(chaindata)
+def reverse_addresses() -> dict:
+    results = {}
+    checksummed_addr_eth = checksum_address_dict(ADDRESSES_ETH)
+    checksummed_addr_arb = checksum_address_dict(ADDRESSES_ARBITRUM)
+    checksummed_addr_polygon = checksum_address_dict(ADDRESSES_POLYGON)
+    results[CHAIN_ETH] = {v: k for k, v in checksummed_addr_eth['sett_vaults'].items()}
+    results[CHAIN_ETH][Web3.toChecksumAddress('0x4b92d19c11435614CD49Af1b589001b7c08cD4D5')] \
+        = "byvWBTC"
+    results[CHAIN_MATIC] = {v: k for k, v in checksummed_addr_polygon['sett_vaults'].items()}
+    results[CHAIN_ARB] = {v: k for k, v in checksummed_addr_arb['sett_vaults'].items()}
+    return results
 
-
-registry = DotMap({
-    "eth": checksum_address_dict(ADDRESSES_ETH),
-    "ibbtc": checksum_address_dict(ADDRESSES_IBBTC),
-    "bsc": checksum_address_dict(ADDRESSES_BSC),
-    "bridge": checksum_address_dict(ADDRESSES_BRIDGE),
-    "poly": checksum_address_dict(ADDRESSES_POLYGON),
-    "arbitrum": checksum_address_dict(ADDRESSES_ARBITRUM),
-    "rinkeby": checksum_address_dict(ADDRESSES_RINKEBY),
-})
-
-# Excluding BSC since all Setts there are marked as deprecated
-CHAIN_ETH = "ETH"
-CHAIN_ARB = "ARB"
-CHAIN_MATIC = "POLYGON"
-CHAIN_FANTOM = "FTM"
-SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
-
-MAPPING_TO_SETT_API_CHAIN_PARAM = {
-    CHAIN_ETH: "eth",
-    CHAIN_ARB: "arbitrum",
-    CHAIN_MATIC: "matic",
-    CHAIN_FANTOM: "fantom",
-}
-
-
-def get_registry():
-    if chain.id == 1:
-        return registry.eth
-    elif chain.id == 137:
-        return registry.poly
-    elif chain.id == 56:
-        return registry.bsc
-    elif chain.id == 42161:
-        return registry.arbitrum
-    elif chain.id == 250:
-        return registry.ftm
-    elif chain.id == 42:
-        return registry.kovan
-
-
-r = get_registry()
-
-# flatten nested dicts and invert the resulting key <-> value
-# this allows for reversed lookup of an address
-df = pd.json_normalize(registry, sep="_")
-reverse = df.T.reset_index().set_index(0)["index"].to_dict()
