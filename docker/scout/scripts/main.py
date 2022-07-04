@@ -577,6 +577,7 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
 
 
 def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
+    log.info(f"Processing BPT info for BPT: {bpt_name}")
     bpt_contract = interface.BPTWeighed(bpt_address)
     # Related pool_id
     pool_id = bpt_contract.getPoolId()
@@ -585,12 +586,14 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
     # Iterate through all BPT underlying tokens and set params
     for index, token_address in enumerate(tokens):
         bpt_underlying_token = interface.ERC20(token_address)
+        token_balance = balances[index] / 10 ** bpt_underlying_token.decimals()
+        log.info(f"Underlying token decimals: {bpt_underlying_token.decimals()}")
         bpt_gauge.labels(
             bpt_name,
             bpt_underlying_token.symbol(),
             token_address,
             "balance_in_bpt"
-        ).set(balances[index] / bpt_underlying_token.decimals())
+        ).set(token_balance)
 
 
 def main():

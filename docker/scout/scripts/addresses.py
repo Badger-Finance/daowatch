@@ -487,6 +487,9 @@ ADDRESSES_ETH = {
         "B_80_BAL_20_WETH": "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56",
         "Bstable_auraBAL": "0x3dd0843a028c86e0b760b1a76929d1c5ef93a2dd",
     },
+    "balancer_misc": {
+        "balancer_vault": "0xba12222222228d8ba445958a75a0704d566bf2c8",
+    },
     "hidden_hand": {
         "bribe_vault": "0x9DDb2da7Dd76612e0df237B89AF2CF4413733212",
         "tokenmak_briber": "0x7816b3D0935D668bCfc9A4aaB5a84EBc7fF320cf",
