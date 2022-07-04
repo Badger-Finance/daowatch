@@ -1,8 +1,4 @@
-import pandas as pd
-from brownie import chain
-from dotmap import DotMap
 from web3 import Web3
-import json
 
 ADDRESSES_ETH = {
     "zero": "0x0000000000000000000000000000000000000000",

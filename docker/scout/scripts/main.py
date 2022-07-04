@@ -58,6 +58,8 @@ custodians = ADDRESSES["custodians"]
 oracles = ADDRESSES["oracles"]
 peaks = ADDRESSES["peaks"]
 
+BALANCER_BPTS = ADDRESSES['balancer_bpt']
+BALANCER_VAULT = ADDRESSES['balancer_misc']['balancer_vault']
 CVX_ADDRESSES = {
     **ADDRESSES['crv_pools'],
     **ADDRESSES['crv_3_pools'],
@@ -206,7 +208,6 @@ def update_crv_3_tokens_guage(guage, pool_name, pool_address):
     totalSupply = pool_token_interface.totalSupply() / pool_divisor
     balance = pool_token_interface.balance() / pool_divisor
 
-
     tokenlist = []
     usd_balance = 0
     for i in range(3):
@@ -279,12 +280,13 @@ def update_crv_factory_tokens_gauge(
         crv_tokens_gauge.labels(
             pool_name, token.address,
             f"{token.symbol()}_balance").set(token.balanceOf(pool_address) / 10 ** token.decimals())
-        if token.address != treasury_tokens['pxCVX']: ##TODO remove when CG pricing
+        if token.address != treasury_tokens['pxCVX']:  ## TODO remove when CG pricing
             crv_tokens_gauge.labels(
                 pool_name, token_address,
-                f"{token.symbol()}_usd_balance").set(usd_prices_by_token_address[token.address] * token.balanceOf(pool_address) / 10 ** token.decimals())
-
-
+                f"{token.symbol()}_usd_balance").set(
+                    usd_prices_by_token_address[token.address]
+                    * token.balanceOf(pool_address) / 10 ** token.decimals()
+            )
 
 
 def update_crv_meta_tokens_gauge(
@@ -325,12 +327,12 @@ def update_crv_meta_tokens_gauge(
 def update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens):
     sett_name = sett.name
     sett_address = sett_vaults[sett_name]
-    sett_token_name = re.sub("^b", "", sett.name) #bveCVX
-    sett_token_name = re.sub("^gravi", "", sett_token_name) #remBADGER and DIGG
-    sett_token_name = re.sub("^rem", "", sett_token_name) #graviAURA
-    sett_token_name = re.sub("harvest", "", sett_token_name) #harvest sett
-    sett_token_name = re.sub("bbveCVX-CVX-f", "CVX", sett_token_name) #bveCVX LP
-    sett_token_name = re.sub("^ve", "", sett_token_name) #bveCVX
+    sett_token_name = re.sub("^b", "", sett.name)  # bveCVX
+    sett_token_name = re.sub("^gravi", "", sett_token_name)  # remBADGER and DIGG
+    sett_token_name = re.sub("^rem", "", sett_token_name)  # graviAURA
+    sett_token_name = re.sub("harvest", "", sett_token_name)  # harvest sett
+    sett_token_name = re.sub("bbveCVX-CVX-f", "CVX", sett_token_name)  # bveCVX LP
+    sett_token_name = re.sub("^ve", "", sett_token_name)  # bveCVX
     try:
         sett_token_address = treasury_tokens[sett_token_name]
     except KeyError:
@@ -344,7 +346,9 @@ def update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens):
         sett_gauge.labels(sett_name, sett_address, sett_token_name, param).set(value)
 
     try:
-        usd_prices_by_token_address[sett_address] = sett_info["pricePerShare"] * usd_prices_by_token_address[sett_token_address]
+        usd_prices_by_token_address[sett_address] = (
+                sett_info["pricePerShare"] * usd_prices_by_token_address[sett_token_address]
+        )
         sett_gauge.labels(sett_name, sett_address, sett_token_name, "usdBalance").set(
             usd_prices_by_token_address[sett_address] * sett_info["balance"]
         )
@@ -544,21 +548,44 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
     aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18)
 
 
-
 def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) -> None:
     # Add vlAURA amount
     convex_locker = interface.ConvexLocker(ADDRESSES['convexLocker'])
     epoch = convex_locker.epochCount()
-    pxCVX = interface.ConvexLocker(treasury_tokens['pxCVX'])
+    px_cvx = interface.ConvexLocker(treasury_tokens['pxCVX'])
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
     convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() / 1e18)
     # Add auraBAL total supply
     convex_gauge.labels("cvxCRV_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
     convex_gauge.labels("CVX_balance").set(convex_token.balanceOf(ADDRESSES['convexLocker']) / 1e18)
-    convex_gauge.labels("pxCVX_total_supply").set(pxCVX.totalSupply() / 1e18)
-    convex_gauge.labels("CVX_epoch_total_supply_this_week").set(convex_locker.totalSupplyAtEpoch(epoch - 2) / 1e18)
-    convex_gauge.labels("CVX_epoch_total_supply_next_week").set(convex_locker.totalSupplyAtEpoch(epoch - 1) / 1e18)
+    convex_gauge.labels("pxCVX_total_supply").set(px_cvx.totalSupply() / 1e18)
+    convex_gauge.labels(
+        "CVX_epoch_total_supply_this_week").set(
+        convex_locker.totalSupplyAtEpoch(epoch - 2) / 1e18
+    )
+    convex_gauge.labels(
+        "CVX_epoch_total_supply_next_week"
+    ).set(
+        convex_locker.totalSupplyAtEpoch(epoch - 1) / 1e18
+    )
+
+
+def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
+    bpt_contract = interface.BPTWeighed(bpt_address)
+    # Related pool_id
+    pool_id = bpt_contract.getPoolId()
+    balancer_vault_contract = interface.BalancerVault(BALANCER_VAULT)
+    tokens, balances, _ = balancer_vault_contract.getPoolTokens(pool_id)
+    # Iterate through all BPT underlying tokens and set params
+    for index, token_address in enumerate(tokens):
+        bpt_underlying_token = interface.ERC20(token_address)
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_underlying_token.symbol(),
+            token_address,
+            "balance_in_bpt"
+        ).set(balances[index] / bpt_underlying_token.decimals())
 
 
 def main():
@@ -570,6 +597,11 @@ def main():
     block_gauge = Gauge(
         name="blocks",
         documentation="Info about blocks processed",
+    )
+    bpt_gauge = Gauge(
+        name="BPT",
+        documentation="Info about balancer pool tokens",
+        labelnames=["bpt", "token", "tokenAddress", "param"]
     )
     coingecko_price_gauge = Gauge(
         name="coingecko_prices",
@@ -723,16 +755,19 @@ def main():
             update_lp_tokens_gauge(
                 lp_tokens_gauge, lp_tokens, lp_token, token_interfaces
             )
-        ## General Aura data (lockers)
+        # General Aura data (lockers)
         aura_token = token_interfaces[treasury_tokens['AURA']]
         aura_bal_token = token_interfaces[treasury_tokens['auraBAL']]
         update_aura_info_gauge(aura_gauge, aura_token, aura_bal_token)
 
-        ## General Covex data (lockers)
+        # General Covex data (lockers)
         convex_token = token_interfaces[treasury_tokens['CVX']]
         cvxcrv_token = token_interfaces[treasury_tokens['cvxCRV']]
         update_convex_info_gauge(convex_gauge, convex_token, cvxcrv_token)
 
+        # Process balance pool data
+        for bpt_name, bpt_address in BALANCER_BPTS.items():
+            update_bpt_gauge(bpt_gauge, bpt_name, bpt_address)
         # process curve pool data
         for pool_name, pool_address in CRV_POOLS_WITH_CRV_STABLECOIN_POOLS.items():
             update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address)
