@@ -541,7 +541,9 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
     # Add auraBAL total supply
     aura_gauge.labels("AURA_locker_totalSupply").set(aura_locker.totalSupply() / 1e18)
     aura_gauge.labels("AURA_balance").set(aura_token.balanceOf(ADDRESSES['AuraLocker']) / 1e18)
-    aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18)
+    aura_gauge.labels("AURA_minted_per_bal_earned").set( ((500 - (aura_token.totalSupply() - 50000000) / 100000) * 2.5 + 700) / 500 )
+    aura_gauge.labels("AURA_totalSupply").set(aura_token.totalSupply() / 1e18) ## TODO remove when in coingecko
+    aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18) ## TODO remove when in coingecko and update Aura locking dashboard
 
 
 
@@ -553,10 +555,10 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
     convex_gauge.labels("CVX_locked").set(convex_locker.lockedSupply() / 1e18)
     convex_gauge.labels("CVX_locker_totalSupply").set(convex_locker.totalSupply() / 1e18)
     # Add auraBAL total supply
-    convex_gauge.labels("cvxCRV_total_supply").set(cvxcrv_token.totalSupply() / 1e18)
-    convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18)
+    convex_gauge.labels("cvxCRV_total_supply").set(cvxcrv_token.totalSupply() / 1e18) ##TODO remove when in coingecko and update convex locking dashboard
+    convex_gauge.labels("CVX_total_supply").set(convex_token.totalSupply() / 1e18) ##TODO remove when in coingecko and update convex locking dashboard
     convex_gauge.labels("CVX_balance").set(convex_token.balanceOf(ADDRESSES['convexLocker']) / 1e18)
-    convex_gauge.labels("pxCVX_total_supply").set(pxCVX.totalSupply() / 1e18)
+    convex_gauge.labels("pxCVX_total_supply").set(pxCVX.totalSupply() / 1e18) ##TODO remove when in coingecko and update convex locking dashboard
     convex_gauge.labels("CVX_epoch_total_supply_this_week").set(convex_locker.totalSupplyAtEpoch(epoch - 2) / 1e18)
     convex_gauge.labels("CVX_epoch_total_supply_next_week").set(convex_locker.totalSupplyAtEpoch(epoch - 1) / 1e18)
 
