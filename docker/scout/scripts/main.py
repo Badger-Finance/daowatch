@@ -29,6 +29,8 @@ from scripts.data import get_token_interfaces
 from scripts.data import get_token_prices
 from scripts.data import get_treasury_token_addr_by_pool_name
 from scripts.data import get_yvault_data
+from scripts.data import get_json_request
+
 from scripts.logconf import console
 from scripts.logconf import log
 
@@ -51,6 +53,7 @@ crv_pools = ADDRESSES["crv_pools"]
 crv_stablecoin_pools = ADDRESSES["crv_stablecoin_pools"]
 crv_meta_pools = ADDRESSES["crv_meta_pools"]
 crv_3_pools = ADDRESSES["crv_3_pools"]
+crv_factory_pools = ADDRESSES["crv_factory_pools"]
 sett_vaults = ADDRESSES["sett_vaults"]
 yearn_vaults = ADDRESSES["yearn_vaults"]
 custodians = ADDRESSES["custodians"]
@@ -120,16 +123,12 @@ def update_price_gauge(
                 ).set(price[countertoken])
 
             usd_prices_by_token_address[token_address] = price["usd"]
-        else:
-            log.info(
-                f"Skipping CoinGecko price for [bold]{fetched_name}: {token_address} ..."
-            )
+
     except Exception as e:
         log.warning(
             f"Error getting CoinGecko price for [bold]{fetched_name}: {token_address}"
         )
         log.warning(e)
-        # log.warning(token_prices, token_name, fetched_name, token_address)
 
 
 def update_digg_gauge(digg_gauge, digg_prices, slpWbtcDigg, uniWbtcDigg):
@@ -248,6 +247,42 @@ def update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address):
         pool_name, token_address, "totalSupply").set(token_interface.totalSupply() / 1e18)
 
     usd_prices_by_token_address[pool_token_address] = usd_price
+
+
+def update_crv_factory_tokens_gauge(
+        crv_tokens_gauge: Gauge, pool_name: str, pool_address: str) -> None:
+    log.info(f"Processing crvToken data for [bold] factory pool: {pool_name}...")
+    pool_token_address = treasury_tokens[pool_name]
+    crv_factory_interface = interface.CRVfactoryPool(pool_address)
+    crv_token_interface = interface.ERC20(pool_token_address)
+    token_address = get_treasury_token_addr_by_pool_name(pool_name, treasury_tokens)
+
+    pool_divisor = 10 ** crv_token_interface.decimals()
+    total_supply = crv_token_interface.totalSupply() / pool_divisor
+
+    virtual_price = crv_factory_interface.get_virtual_price() / 1e18
+##    usd_price = virtual_price * usd_prices_by_token_address[token_address] # TODO USD PRICE needs total overhaul here (look in coinz loop)
+    crv_tokens_gauge.labels(pool_name, token_address, "pricePerShare").set(virtual_price)
+#    crv_tokens_gauge.labels(pool_name, token_address, "usdPricePerShare").set(usd_price)
+#    crv_tokens_gauge.labels(pool_name, token_address, "balance").set(balance)
+    crv_tokens_gauge.labels(pool_name, token_address, "totalSupply").set(total_supply)
+
+    token_list = []
+    for i in itertools.count(start=0):
+        try:
+            token_list.append(interface.ERC20(crv_factory_interface.coins(i)))
+        except ValueError:
+            break
+    for token in token_list:
+        crv_tokens_gauge.labels(
+            pool_name, token.address,
+            f"{token.symbol()}_balance").set(token.balanceOf(pool_address) / 10 ** token.decimals())
+        if token.address != treasury_tokens['pxCVX']: ##TODO remove when CG pricing
+            crv_tokens_gauge.labels(
+                pool_name, token_address,
+                f"{token.symbol()}_usd_balance").set(usd_prices_by_token_address[token.address] * token.balanceOf(pool_address) / 10 ** token.decimals())
+
+
 
 
 def update_crv_meta_tokens_gauge(
@@ -499,13 +534,31 @@ def update_aura_info_gauge(aura_gauge: Gauge, aura_token, aura_bal_token) -> Non
         aura_token.balanceOf(ADDRESSES['AuraMerkleDrop']) / 1e18
     )
     # Add vlAURA amount
+
     aura_locker = interface.AuraLocker(ADDRESSES['AuraLocker'])
     aura_gauge.labels("AURA_locked").set(aura_locker.lockedSupply() / 1e18)
     # Add auraBAL total supply
     aura_gauge.labels("AURA_locker_totalSupply").set(aura_locker.totalSupply() / 1e18)
     aura_gauge.labels("AURA_balance").set(aura_token.balanceOf(ADDRESSES['AuraLocker']) / 1e18)
     aura_gauge.labels("auraBAL_total_supply").set(aura_bal_token.totalSupply() / 1e18)
+    aura_gauge.labels("eBAL_usd_price").set(bpt_data[ADDRESSES['balancer']['B_80_BAL_20_WETH']])
+    log.info(f"eBAL_price={bpt_data[ADDRESSES['balancer']['B_80_BAL_20_WETH']]}")
 
+
+    def get_bpt_pricing_data(bpt_addresses: list[str], network: Optional[str] = "ETH") -> Optional[List[Dict]]:
+        log.info("Fetching BPT price from Badger API")
+    chain = MAPPING_TO_SETT_API_CHAIN_PARAM[network]
+    response = get_json_request(
+        request_type="get", url=f"https://api.badger.com/v3/prices?tokens={bpt_addresses}"
+    )
+    if not response:
+        log.warning("Cannot fetch balancer pricing data data from Badger API")
+        return
+
+    bpt_data = []
+    for bpt in response:
+        bpt_data.append(bpt)
+    return get_bpt_pricing_data()
 
 
 def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) -> None:
@@ -672,6 +725,25 @@ def main():
                 countertoken_csv,
                 NETWORK,
             )
+        # process bpt token prices
+        response = get_json_request(
+            request_type="get", url=f"https://api.badger.com/v3/prices?tokens={ADDRESSES['balancer_bpt'].values()}"
+        )
+        if not response:
+            log.warning("Cannot fetch balancer pricing data data from Badger API")
+            response={}
+        bpt_data = []
+        for bpt in response:
+            bpt_data.append(bpt)
+        for name, address in ADDRESSES['balancer_bpt']:
+            usd_prices_by_token_address[address] = bpt_data[address]
+            coingecko_price_gauge.labels(
+                name,
+                token_address,
+                'usd',
+            ).set(bpt_data[address])
+            log.warning(f"BPT {name} with address {address} has price{bpt_data[address]}")
+
         # process digg oracle prices
         update_digg_gauge(digg_gauge, digg_prices, slpWbtcDigg, uniWbtcDigg)
 
@@ -702,6 +774,9 @@ def main():
 
         for meta_pool_name, meta_pool_address in crv_meta_pools.items():
             update_crv_meta_tokens_gauge(crv_tokens_gauge, meta_pool_name, meta_pool_address)
+
+        for factory_pool_name, factory_pool_address in crv_factory_pools.items():
+            update_crv_factory_tokens_gauge(crv_tokens_gauge, factory_pool_name, factory_pool_address)
 
         # process 3crv data data
         for pool_name, pool_address in crv_3_pools.items():
