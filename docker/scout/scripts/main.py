@@ -59,6 +59,7 @@ oracles = ADDRESSES["oracles"]
 peaks = ADDRESSES["peaks"]
 
 BALANCER_BPTS = ADDRESSES['balancer_bpt']
+BALANCER = ADDRESSES['balancer']
 BALANCER_VAULT = ADDRESSES['balancer_misc']['balancer_vault']
 CVX_ADDRESSES = {
     **ADDRESSES['crv_pools'],
@@ -626,6 +627,20 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
         ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
 
 
+def update_vebal_gauge(vebal_gauge: Gauge) -> None:
+    log.info("Updating veBAL gauge")
+    bpt_contract = interface.BPTWeighed(BALANCER_BPTS['B_80_BAL_20_WETH'])
+    vebal_token_contract = interface.ERC20(BALANCER['veBAL'])
+    # Amount of BPTs locked in veBAL
+    vebal_gauge.labels("locked").set(
+        bpt_contract.balanceOf(BALANCER['veBAL']) / 10 ** bpt_contract.decimals()
+    )
+    # Each veBAL == 1 vote
+    vebal_gauge.labels("total_votes").set(
+        vebal_token_contract.totalSupply() / 10 ** vebal_token_contract.decimals()
+    )
+
+
 def main():
     # set up prometheus
     log.info(
@@ -640,6 +655,11 @@ def main():
         name="BPT",
         documentation="Info about balancer pool tokens",
         labelnames=["bpt", "token", "tokenAddress", "param"]
+    )
+    vebal_gauge = Gauge(
+        name="veBAL",
+        documentation="Info about veBAL token",
+        labelnames=["param"]
     )
     coingecko_price_gauge = Gauge(
         name="coingecko_prices",
@@ -803,8 +823,9 @@ def main():
         cvxcrv_token = token_interfaces[treasury_tokens['cvxCRV']]
         update_convex_info_gauge(convex_gauge, convex_token, cvxcrv_token)
 
-        # Process balance pool data
-
+        # Process veBAL token data
+        update_vebal_gauge(vebal_gauge)
+        # Process balancer bpt data
         for bpt_name, bpt_address in BALANCER_BPTS.items():
             update_bpt_gauge(bpt_gauge, bpt_name, bpt_address)
         # process curve pool data
