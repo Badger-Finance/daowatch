@@ -578,22 +578,52 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
 
 def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
     log.info(f"Processing BPT info for BPT: {bpt_name}")
-    bpt_contract = interface.BPTWeighed(bpt_address)
-    # Related pool_id
-    pool_id = bpt_contract.getPoolId()
+    # Main Balancer Vault contract that acts as pool controller
     balancer_vault_contract = interface.BalancerVault(BALANCER_VAULT)
-    tokens, balances, _ = balancer_vault_contract.getPoolTokens(pool_id)
-    # Iterate through all BPT underlying tokens and set params
+
+    bpt_contract = interface.BPTWeighed(bpt_address)
+    bpt_total_supply = bpt_contract.totalSupply()
+    bpt_gauge.labels(
+        bpt_name,
+        bpt_name,
+        bpt_address,
+        "total_supply"
+    ).set(bpt_total_supply)
+    tokens, balances, _ = balancer_vault_contract.getPoolTokens(bpt_contract.getPoolId())
+    bpt_cummulative_price = 0
+    # Iterate through all BPT underlying tokens and set params. Also adds up prices in $ for each
+    # underlying token under BPT
     for index, token_address in enumerate(tokens):
-        bpt_underlying_token = interface.ERC20(token_address)
+        log.warning(f"Underlying token for BPT {bpt_name}: {token_address}")
+        token_address_checksummed = Web3.toChecksumAddress(token_address)
+        bpt_underlying_token = interface.ERC20(token_address_checksummed)
         token_balance = balances[index] / 10 ** bpt_underlying_token.decimals()
-        log.info(f"Underlying token decimals: {bpt_underlying_token.decimals()}")
         bpt_gauge.labels(
             bpt_name,
             bpt_underlying_token.symbol(),
-            token_address,
-            "balance_in_bpt"
+            token_address_checksummed,
+            "token_balance"
         ).set(token_balance)
+        # TODO: For now we skip stable pools price calculation. Impl in future if needed
+        if not re.search('stable', bpt_name, re.IGNORECASE):
+            token_price_data = get_token_prices(token_address_checksummed, "usd", NETWORK)
+            bpt_cummulative_price += (
+                token_price_data[token_address_checksummed.lower()]['usd'] * token_balance
+            )
+    # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
+    if bpt_cummulative_price != 0:
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "mcap"
+        ).set(bpt_cummulative_price)
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "price"
+        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
 
 
 def main():
@@ -774,6 +804,7 @@ def main():
         update_convex_info_gauge(convex_gauge, convex_token, cvxcrv_token)
 
         # Process balance pool data
+
         for bpt_name, bpt_address in BALANCER_BPTS.items():
             update_bpt_gauge(bpt_gauge, bpt_name, bpt_address)
         # process curve pool data
