@@ -467,6 +467,7 @@ def update_wallets_gauge(
             continue
         token = interface.ERC20(wallet_info['token'])
         token_balance = token.balanceOf(wallet_address) / 10 ** token.decimals()
+
         WALLETS_TOKEN_BALANCES[wallet_address][token_address] = token_balance
         eth_name = "ETH"
         eth_balance = float(w3.fromWei(w3.eth.getBalance(wallet_address), "ether"))
@@ -605,6 +606,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
             token_address_checksummed,
             "token_balance"
         ).set(token_balance)
+
         # TODO: For now we skip stable pools price calculation. Impl in future if needed
         if not re.search('stable', bpt_name, re.IGNORECASE):
             token_price_data = get_token_prices(token_address_checksummed, "usd", NETWORK)
@@ -619,12 +621,22 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
             bpt_address,
             "mcap"
         ).set(bpt_cummulative_price)
+
+        usd_prices_by_token_address[token_address] = bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals())
+
         bpt_gauge.labels(
             bpt_name,
             bpt_name,
             bpt_address,
             "price"
-        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
+        ).set( usd_prices_by_token_address[token_address])
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "usd_balance"
+        ).set(balances[index] / (10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address])
+
 
 
 def update_vebal_gauge(vebal_gauge: Gauge) -> None:
@@ -872,12 +884,3 @@ def main():
                 step,
             )
 
-        # process bridged tokens
-        for custodian_name, custodian_address in custodians.items():
-            update_xchain_bridge_gauge(
-                xchain_bridge_gauge,
-                custodian_name,
-                custodian_address,
-                token_interfaces,
-                treasury_tokens,
-            )
