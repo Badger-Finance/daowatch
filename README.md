@@ -42,3 +42,4 @@ The dashboard structure is specified in the `grafana/dashboards` directory.  Thi
 To make changes to these dashboards add/edit/remove the JSON files in this directory and redeploy Grafana with `docker-compose restart`.  Dashboards can also be copied and edited in the Grafana console and exported as a JSON file to change/templatize.
 
 Note that Grafana interpolates `${VAR}` as `VAR` environment variables from the YAML files in `grafana/provisioning/datasources`.
+
