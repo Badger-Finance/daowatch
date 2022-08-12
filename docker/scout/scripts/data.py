@@ -376,16 +376,16 @@ def get_sett_roi_data(network: Optional[str] = "ETH") -> Optional[List[Dict]]:
     log.info("Fetching ROI from Badger API")
     chain = MAPPING_TO_SETT_API_CHAIN_PARAM[network]
     response = get_json_request(
-        request_type="get", url=f"https://api.badger.finance/v2/setts?chain={chain}"
+        request_type="get", url=f"https://api.badger.finance/v2/vaults?chain={chain}"
     )
     if not response:
-        log.warning("Cannot fetch Sett ROI data from Badger API")
+        log.warning("Cannot fetch Vault ROI data from Badger API")
         return
 
-    setts_data = []
-    for sett in response:
-        setts_data.append(sett)
-    return setts_data
+    vaults_data = []
+    for vault in response:
+        vaults_data.append(vault)
+    return vaults_data
 
 
 def get_token_prices_in_usd(network: str) -> Optional[Dict]:
