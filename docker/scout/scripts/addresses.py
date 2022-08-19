@@ -819,12 +819,11 @@ CHAIN_FANTOM = "FTM"
 SUPPORTED_CHAINS = [CHAIN_ETH, CHAIN_ARB, CHAIN_MATIC]
 
 MAPPING_TO_SETT_API_CHAIN_PARAM = {
-    CHAIN_ETH: "eth",
+    CHAIN_ETH: "ethereum",
     CHAIN_ARB: "arbitrum",
     CHAIN_MATIC: "matic",
     CHAIN_FANTOM: "fantom",
 }
-
 
 
 def checksum_address_dict(addresses):
