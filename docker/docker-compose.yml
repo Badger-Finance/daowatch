@@ -30,17 +30,6 @@ services:
       - ARBNODEURL
     entrypoint:
      - "./startArb.sh"
-  ftm-scout:
-    build:
-      context: ./scout
-    container_name: ftm-scout
-    ports:
-      - "8801"
-    environment:
-      - FTMNODEURL
-    entrypoint:
-      - "./startFTM.sh"
-    depends_on: [ prometheus ]
   scout:
     build:
       context: ./scout
