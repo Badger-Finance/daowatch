@@ -8,7 +8,7 @@ from typing import List
 from typing import Optional
 
 import requests
-from brownie import interface
+from brownie import interface  # noqa
 from brownie.network.contract import InterfaceContainer
 
 from scripts.addresses import MAPPING_TO_SETT_API_CHAIN_PARAM
