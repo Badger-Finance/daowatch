@@ -21,8 +21,7 @@ resource "aws_ecs_task_definition" "prometheus" {
     jsondecode(module.prometheus-container-definition.json_map_encoded_list),
   jsondecode(module.scout-container-definition.json_map_encoded_list),
   jsondecode(module.arb-scout-container-definition.json_map_encoded_list),
-  jsondecode(module.scout-container-off-chain-definition.json_map_encoded_list),
-  jsondecode(module.ftm-scout-container-definition.json_map_encoded_list)))
+  jsondecode(module.scout-container-off-chain-definition.json_map_encoded_list)))
   family                   = "${var.app_name}-prometheus"
   requires_compatibilities = ["EC2"]
   execution_role_arn       = aws_iam_role.ecs_exec.arn
@@ -40,7 +39,7 @@ module "prometheus-container-definition" {
   container_name               = "prometheus"
   container_memory_reservation = 250
   essential                    = true
-  links = ["scout-collector", "arb-collector", "scout-off-chain", "ftm-scout"]
+  links = ["scout-collector", "arb-collector", "scout-off-chain"]
   mount_points = [
     {
       containerPath = "/prometheus"
@@ -86,29 +85,6 @@ module "arb-scout-container-definition" {
     {
       name      = "ARBNODEURL"
       valueFrom = var.arbnode_url_ssm_parameter_name
-    }]
-}
-module "ftm-scout-container-definition" {
-  source                       = "cloudposse/ecs-container-definition/aws"
-#  version                      = "0.47.0"
-  container_image              = local.scout_docker_image ## TODO make optional
-  container_name               = "ftm-scout"
-  essential                    = false ## TODO change to true when stable
-  container_memory_reservation = 250
-  entrypoint = ["./startFTM.sh"]
-  log_configuration = {
-    logDriver = "awslogs"
-    options = {
-      awslogs-group         = aws_cloudwatch_log_group.scout.id
-      awslogs-region        = var.region
-      awslogs-stream-prefix = "ftm-scout"
-    }
-  }
-
-  environment = [
-    {
-      name      = "FTMNODEURL"
-      value = "https://rpc.ftm.tools" ##TODO hardcode with paid/better RPC
     }]
 }
 module "scout-container-off-chain-definition" {
