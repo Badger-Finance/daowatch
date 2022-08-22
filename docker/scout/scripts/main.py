@@ -251,15 +251,19 @@ def update_crv_tokens_gauge(
                 f"* usd token price {usd_prices_by_token_address[token_address]} == {usd_price}USD")
     crv_tokens_gauge.labels(pool_name, token_address, "pricePerShare").set(virtual_price)
     amm_gauge.labels(
-        token_interface.symbol(), treasury_tokens[pool_name], None, None, AMM_CURVE, "pricePerShare"
+        token_interface.symbol(), token_interface.address, None, None, AMM_CURVE, "pricePerShare"
     ).set(virtual_price)
     crv_tokens_gauge.labels(pool_name, token_address, "usdPricePerShare").set(usd_price)
     amm_gauge.labels(
-        token_interface.symbol(), treasury_tokens[pool_name],
+        token_interface.symbol(), token_interface.address,
         None, None, AMM_CURVE, "usdPricePerShare"
     ).set(usd_price)
     crv_tokens_gauge.labels(
         pool_name, token_address, "totalSupply").set(token_interface.totalSupply() / 1e18)
+    amm_gauge.labels(
+        token_interface.symbol(), token_interface.address,
+        None, None, AMM_CURVE, "totalSupply"
+    )
 
     usd_prices_by_token_address[pool_token_address] = usd_price
 
@@ -299,7 +303,8 @@ def update_crv_factory_tokens_gauge(
 
 
 def update_crv_meta_tokens_gauge(
-        crv_tokens_gauge: Gauge, pool_name: str, pool_address: str) -> None:
+        crv_tokens_gauge: Gauge, amm_gauge: Gauge,
+        pool_name: str, pool_address: str) -> None:
     log.info(f"Processing crvToken data for [bold] meta pool: {pool_name}...")
     pool_token_address = treasury_tokens[pool_name]
     crv_meta_interface = interface.crvTransfer(pool_address)
@@ -307,7 +312,8 @@ def update_crv_meta_tokens_gauge(
     # Fallback to WBTC
     if not token_address:
         token_address = treasury_tokens["WBTC"]
-
+    token_interface = interface.ERC20(treasury_tokens[pool_name])
+    pool_token_symbol = token_interface.symbol()
     pool_divisor = 10 ** crv_meta_interface.decimals()
     total_supply = crv_meta_interface.totalSupply() / pool_divisor
     balance = crv_meta_interface.balance() / pool_divisor
@@ -318,6 +324,18 @@ def update_crv_meta_tokens_gauge(
     crv_tokens_gauge.labels(pool_name, token_address, "usdPricePerShare").set(usd_price)
     crv_tokens_gauge.labels(pool_name, token_address, "balance").set(balance)
     crv_tokens_gauge.labels(pool_name, token_address, "totalSupply").set(total_supply)
+    amm_gauge.labels(
+        pool_token_symbol, token_interface.address,
+        None, None, AMM_CURVE, "pricePerShare").set(virtual_price)
+    amm_gauge.labels(
+        pool_token_symbol, token_interface.address,
+        None, None, AMM_CURVE, "usdPricePerShare").set(usd_price)
+    amm_gauge.labels(
+        pool_token_symbol, token_interface.address,
+        None, None, AMM_CURVE, "balance").set(balance)
+    amm_gauge.labels(
+        pool_token_symbol, token_interface.address,
+        None, None, AMM_CURVE, "totalSupply").set(total_supply)
 
     token_list = []
     for i in itertools.count(start=0):
@@ -325,11 +343,17 @@ def update_crv_meta_tokens_gauge(
             token_list.append(interface.ERC20(crv_meta_interface.coins(i)))
         except ValueError:
             break
-    for token in token_list:
+    # Set balances for underlying tokens
+    for underlying_token in token_list:
+        token_balance = underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals()
         crv_tokens_gauge.labels(
-            pool_name, token.address,
-            f"{token.symbol()}_balance").set(token.balanceOf(pool_address) / 10 ** token.decimals())
-
+            pool_name, underlying_token.address,
+            f"{underlying_token.symbol()}_balance").set(token_balance)
+        amm_gauge.labels(
+            pool_token_symbol, token_interface.address,
+            underlying_token.symbol(), underlying_token.address,
+            AMM_CURVE, "balance"
+        ).set(token_balance)
     usd_prices_by_token_address[pool_token_address] = usd_price
 
 
@@ -864,7 +888,9 @@ def main():
             update_crv_tokens_gauge(crv_tokens_gauge, new_lp_token_gauge, pool_name, pool_address)
 
         for meta_pool_name, meta_pool_address in crv_meta_pools.items():
-            update_crv_meta_tokens_gauge(crv_tokens_gauge, meta_pool_name, meta_pool_address)
+            update_crv_meta_tokens_gauge(
+                crv_tokens_gauge, new_lp_token_gauge, meta_pool_name, meta_pool_address
+            )
 
         for factory_pool_name, factory_pool_address in crv_factory_pools.items():
             update_crv_factory_tokens_gauge(
