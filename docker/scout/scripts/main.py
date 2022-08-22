@@ -685,6 +685,14 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             AMM_BALANCER,
             "mcap"
         ).set(bpt_cummulative_price)
+        amm_gauge.labels(
+            bpt_name,
+            bpt_address,
+            None,
+            None,
+            AMM_BALANCER,
+            "price"
+        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
 
 
 def update_vebal_gauge(vebal_gauge: Gauge) -> None:
