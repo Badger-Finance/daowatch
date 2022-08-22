@@ -70,7 +70,7 @@ CVX_ADDRESSES = {
 CRV_POOLS_WITH_CRV_STABLECOIN_POOLS = {**crv_pools, **crv_stablecoin_pools}
 
 AMM_BALANCER = "balancer"
-
+AMM_CURVE = "curve"
 peak_sett_composition = {
     "badgerPeak": {
         "bcrvRenBTC": sett_vaults["bcrvRenBTC"],
@@ -227,7 +227,9 @@ def update_crv_3_tokens_guage(guage, pool_name, pool_address):
         guage.labels(pool_name, pool_token_interface.address, f"{tokenInterface.symbol()}_per_share").set((tokenInterface.balanceOf(pool_address) / 10 ** tokenInterface.decimals()) / (pool_token_interface.totalSupply()/ pool_divisor))
 
 
-def update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address):
+def update_crv_tokens_gauge(
+        crv_tokens_gauge: Gauge, amm_gauge: Gauge,
+        pool_name: str, pool_address: str) -> None:
     log.info(f"Processing crvToken data for [bold]{pool_name}...")
 
     pool_token_name = pool_name
@@ -248,7 +250,14 @@ def update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address):
     log.warning(f"CRV Token price: {pool_name}: virtual price {virtual_price} "
                 f"* usd token price {usd_prices_by_token_address[token_address]} == {usd_price}USD")
     crv_tokens_gauge.labels(pool_name, token_address, "pricePerShare").set(virtual_price)
+    amm_gauge.labels(
+        token_interface.symbol(), treasury_tokens[pool_name], None, None, AMM_CURVE, "pricePerShare"
+    ).set(virtual_price)
     crv_tokens_gauge.labels(pool_name, token_address, "usdPricePerShare").set(usd_price)
+    amm_gauge.labels(
+        token_interface.symbol(), treasury_tokens[pool_name],
+        None, None, AMM_CURVE, "usdPricePerShare"
+    ).set(usd_price)
     crv_tokens_gauge.labels(
         pool_name, token_address, "totalSupply").set(token_interface.totalSupply() / 1e18)
 
@@ -267,10 +276,7 @@ def update_crv_factory_tokens_gauge(
     total_supply = crv_token_interface.totalSupply() / pool_divisor
 
     virtual_price = crv_factory_interface.get_virtual_price() / 1e18
-##    usd_price = virtual_price * usd_prices_by_token_address[token_address] # TODO USD PRICE needs total overhaul here (look in coinz loop)
     crv_tokens_gauge.labels(pool_name, token_address, "pricePerShare").set(virtual_price)
-#    crv_tokens_gauge.labels(pool_name, token_address, "usdPricePerShare").set(usd_price)
-#    crv_tokens_gauge.labels(pool_name, token_address, "balance").set(balance)
     crv_tokens_gauge.labels(pool_name, token_address, "totalSupply").set(total_supply)
 
     token_list = []
@@ -283,7 +289,7 @@ def update_crv_factory_tokens_gauge(
         crv_tokens_gauge.labels(
             pool_name, token.address,
             f"{token.symbol()}_balance").set(token.balanceOf(pool_address) / 10 ** token.decimals())
-        if token.address != treasury_tokens['pxCVX']:  ## TODO remove when CG pricing
+        if token.address != treasury_tokens['pxCVX']:  # TODO remove when CG pricing
             crv_tokens_gauge.labels(
                 pool_name, token_address,
                 f"{token.symbol()}_usd_balance").set(
@@ -855,7 +861,7 @@ def main():
             update_bpt_gauge(bpt_gauge, new_lp_token_gauge, bpt_name, bpt_address)
         # process curve pool data
         for pool_name, pool_address in CRV_POOLS_WITH_CRV_STABLECOIN_POOLS.items():
-            update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address)
+            update_crv_tokens_gauge(crv_tokens_gauge, new_lp_token_gauge, pool_name, pool_address)
 
         for meta_pool_name, meta_pool_address in crv_meta_pools.items():
             update_crv_meta_tokens_gauge(crv_tokens_gauge, meta_pool_name, meta_pool_address)
@@ -863,7 +869,7 @@ def main():
         for factory_pool_name, factory_pool_address in crv_factory_pools.items():
             update_crv_factory_tokens_gauge(
                 crv_tokens_gauge, factory_pool_name, factory_pool_address
-        )
+            )
 
         # process 3crv data data
         for pool_name, pool_address in crv_3_pools.items():
