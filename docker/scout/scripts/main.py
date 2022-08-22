@@ -203,28 +203,84 @@ def update_lp_tokens_gauge(lp_tokens_gauge, lp_tokens, lp_token, token_interface
         log.warning(e)
 
 
-def update_crv_3_tokens_guage(guage, pool_name, pool_address):
+def update_crv_3_tokens_guage(gauge: Gauge, amm_gauge: Gauge, pool_name, pool_address) -> None:
     log.info(f"Processing crvToken data for [bold]{pool_name}...")
     pool_token_interface = interface.ERC20(treasury_tokens[pool_name])
+    pool_token_symbol = pool_token_interface.symbol()
     pool = interface.tricryptoPool(pool_address)
     pool_divisor = 10 ** pool_token_interface.decimals()
-    totalSupply = pool_token_interface.totalSupply() / pool_divisor
+    total_supply = pool_token_interface.totalSupply() / pool_divisor
     balance = pool_token_interface.balance() / pool_divisor
 
     tokenlist = []
     usd_balance = 0
     for i in range(3):
         tokenlist.append(interface.ERC20(pool.coins(i)))
-    for tokenInterface in tokenlist:
-        guage.labels(pool_name, pool_token_interface.address, f"{tokenInterface.symbol()}_balance").set(tokenInterface.balanceOf(pool_address) / 10 ** tokenInterface.decimals())
-        usd_balance += (tokenInterface.balanceOf(pool_address) / 10 ** tokenInterface.decimals()) * usd_prices_by_token_address[tokenInterface.address]
-    usd_price = (usd_balance / totalSupply)
-    guage.labels(pool_name, pool_token_interface.address, "usdPricePerShare").set(usd_price)
-    guage.labels(pool_name, pool_token_interface.address, "totalSupply").set(totalSupply)
-    guage.labels(pool_name, pool_token_interface.address, "balance").set(balance)
+    for underlying_token in tokenlist:
+        underlying_price_per_share = (
+            (underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals())
+            / (pool_token_interface.totalSupply() / pool_divisor)
+        )
+        underlying_balance = (
+            underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals()
+        )
+        underlying_token_symbol = underlying_token.symbol()
+        gauge.labels(
+            pool_name,
+            pool_token_interface.address,
+            f"{underlying_token.symbol()}_per_share"
+        ).set(underlying_price_per_share)
+        amm_gauge.labels(
+            pool_token_symbol,
+            pool_token_interface.address,
+            underlying_token_symbol,
+            underlying_token.address,
+            AMM_CURVE,
+            "pricePerShare",
+        ).set(underlying_price_per_share)
+        gauge.labels(
+            pool_name,
+            pool_token_interface.address,
+            f"{underlying_token.symbol()}_balance"
+        ).set(underlying_balance)
+        amm_gauge.labels(
+            pool_token_symbol,
+            pool_token_interface.address,
+            underlying_token_symbol,
+            underlying_token.address,
+            AMM_CURVE,
+            "balance",
+        ).set(underlying_balance)
+        usd_balance += (
+            (underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals())
+            * usd_prices_by_token_address[underlying_token.address]
+        )
+    usd_price = usd_balance / total_supply
+    gauge.labels(pool_name, pool_token_interface.address, "usdPricePerShare").set(usd_price)
+    amm_gauge.labels(
+        pool_token_symbol,
+        pool_token_interface.address,
+        None, None,
+        AMM_CURVE,
+        "usdPricePerShare",
+    ).set(usd_price)
+    gauge.labels(pool_name, pool_token_interface.address, "totalSupply").set(total_supply)
+    amm_gauge.labels(
+        pool_token_symbol,
+        pool_token_interface.address,
+        None, None,
+        AMM_CURVE,
+        "totalSupply",
+    ).set(total_supply)
+    gauge.labels(pool_name, pool_token_interface.address, "balance").set(balance)
+    amm_gauge.labels(
+        pool_token_symbol,
+        pool_token_interface.address,
+        None, None,
+        AMM_CURVE,
+        "balance",
+    ).set(balance)
     usd_prices_by_token_address[pool_token_interface.address] = usd_price
-    for tokenInterface in tokenlist:
-        guage.labels(pool_name, pool_token_interface.address, f"{tokenInterface.symbol()}_per_share").set((tokenInterface.balanceOf(pool_address) / 10 ** tokenInterface.decimals()) / (pool_token_interface.totalSupply()/ pool_divisor))
 
 
 def update_crv_tokens_gauge(
@@ -926,7 +982,9 @@ def main():
 
         # process 3crv data data
         for pool_name, pool_address in crv_3_pools.items():
-            update_crv_3_tokens_guage(crv_nonbtc_tokens_gauge, pool_name, pool_address)
+            update_crv_3_tokens_guage(
+                crv_nonbtc_tokens_gauge, new_lp_token_gauge, pool_name, pool_address
+            )
 
         for sett in sett_data:
             update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens)
