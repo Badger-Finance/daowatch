@@ -4,7 +4,7 @@ ADDRESSES_ETH = {
     "zero": "0x0000000000000000000000000000000000000000",
     "treasury": "0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B",
     "governance_timelock": "0x21CF9b77F88Adf8F8C98d7E33Fe601DC57bC0893",
-    "rewardsLogger" : "0x0A4F4e92C3334821EbB523324D09E321a6B0d8ec",
+    "rewardsLogger": "0x0A4F4e92C3334821EbB523324D09E321a6B0d8ec",
     "EmissionControl": "0x31825c0A6278b89338970e3eB979b05B27FAa263",
     "registry": "0xFda7eB6f8b7a9e9fCFd348042ae675d1d652454f",
     "registry_v2": "0xdc602965F3e5f1e7BAf2446d5564b407d5113A06",
@@ -27,17 +27,17 @@ ADDRESSES_ETH = {
     "digg_monetary_policy": "0x327a78D13eA74145cc0C63E6133D516ad3E974c3",
     # the wallets listed here are looped over by scout and checked for all treasury tokens
     "badger_wallets": {
-#        "fees": "0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B",
-#        "team": "0xe4aa1d8aaf8a50422bc5c7310deb1262d1f6f657",
+        #        "fees": "0x8dE82C4C968663a0284b01069DDE6EF231D0Ef9B",
+        #        "team": "0xe4aa1d8aaf8a50422bc5c7310deb1262d1f6f657",
         "badgertree": "0x660802fc641b154aba66a62137e71f331b6d787a",
-#        "native_autocompounder": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
-#        "badgerhunt": "0x394dcfbcf25c5400fcc147ebd9970ed34a474543",
-#        "DAO_treasury": "0x4441776e6a5d61fa024a5117bfc26b953ad1f425",
-#        "rewards_escrow": "0x19d099670a21bc0a8211a89b84cedf59abb4377f",
+        #        "native_autocompounder": "0x5B60952481Eb42B66bdfFC3E049025AC5b91c127",
+        #        "badgerhunt": "0x394dcfbcf25c5400fcc147ebd9970ed34a474543",
+        #        "DAO_treasury": "0x4441776e6a5d61fa024a5117bfc26b953ad1f425",
+        #        "rewards_escrow": "0x19d099670a21bc0a8211a89b84cedf59abb4377f",
         "dev_multisig": "0xB65cef03b9B89f99517643226d76e286ee999e77",
-#        "test_multisig_1": "0x55949f769d0af7453881435612561d109fff07b8",
-#        "test_multisig": "0x33909cb2633d4B298a72042Da5686B45E9385ed0",
-#        "test_multisig_v1_3": "0xb86f6c9e3158cC4C540219244b80722d6bd9B033",
+        #        "test_multisig_1": "0x55949f769d0af7453881435612561d109fff07b8",
+        #        "test_multisig": "0x33909cb2633d4B298a72042Da5686B45E9385ed0",
+        #        "test_multisig_v1_3": "0xb86f6c9e3158cC4C540219244b80722d6bd9B033",
         "techops_multisig": "0x86cbD0ce0c087b482782c181dA8d191De18C8275",
         "politician_multisig": "0x6F76C6A1059093E21D8B1C13C4e20D8335e2909F",
         "recovered_multisig": "0x9faA327AAF1b564B569Cb0Bc0FDAA87052e8d92c",
@@ -73,17 +73,17 @@ ADDRESSES_ETH = {
         "ops_root-validator-new": "0x1318d5c0C24830D86Cc27Db13Ced0CED31412438",
         "ops_botsquad": "0xF8dbb94608E72A3C4cEeAB4ad495ac51210a341e",
         "ops_botsquad_cycle0": "0x1a6D6D120a7e3F71B084b4023a518c72F1a93EE9",
-#        "digg_treasury": "0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61",
-#        "uniswap_rewards": "0x0c79406977314847a9545b11783635432d7fe019",
+        #        "digg_treasury": "0x5A54Ca44e8F5A1A695f8621f15Bfa159a140bB61",
+        #        "uniswap_rewards": "0x0c79406977314847a9545b11783635432d7fe019",
         "defiDollar_fees": "0x5b5cf8620292249669e1dcc73b753d01543d6ac7",
         "delegate": "0x14f83ff95d4ec5e8812ddf42da1232b0ba1015e6",
-#        "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
-#        "devUngatedProxyAdmin": "0x9215cBDCDe25629d0e3D69ee5562d1b444Cf69F9",
-#        "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
-#        "techOpsProxyAdmin": "0x7D0398D7D7432c47Dffc942Cd097B9eA3d88C385",
-#        "opsProxyAdmin_old": "0x4599F2913a3db4E73aA77A304cCC21516dd7270D",
-#        "badgerHunt": "0x394DCfbCf25C5400fcC147EbD9970eD34A474543",
-#        "rewardsEscrow": "0xBE838aE7f6Ba97e7Eb545a3f43eE96FfBb3184DC",
+        #        "devProxyAdmin": "0x20Dce41Acca85E8222D6861Aa6D23B6C941777bF",
+        #        "devUngatedProxyAdmin": "0x9215cBDCDe25629d0e3D69ee5562d1b444Cf69F9",
+        #        "testProxyAdmin": "0xB10b3Af646Afadd9C62D663dd5d226B15C25CdFA",
+        #        "techOpsProxyAdmin": "0x7D0398D7D7432c47Dffc942Cd097B9eA3d88C385",
+        #        "opsProxyAdmin_old": "0x4599F2913a3db4E73aA77A304cCC21516dd7270D",
+        #        "badgerHunt": "0x394DCfbCf25C5400fcC147EbD9970eD34A474543",
+        #        "rewardsEscrow": "0xBE838aE7f6Ba97e7Eb545a3f43eE96FfBb3184DC",
         "gas_station": "0x04C0205b9D900a49597d9a0345aEAD6D73307C3B",
     },
     # scout stores prices for all tokens here, either from coingecko or
@@ -159,7 +159,7 @@ ADDRESSES_ETH = {
         "bcrvSBTC": "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
         "bcrvTBTC": "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
         "bveCVX": "0xfd05D3C7fe2924020620A8bE4961bBaA747e6305",
-        "yvWBTC": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",  ##TODO NO COINGECKO PRICE
+        "yvWBTC": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",  # TODO NO COINGECKO PRICE
         "aBADGER": "0x43298F9f91a4545dF64748e78a2c777c580573d6",
         "pxCVXCVX_f": "0x137469B55D1f15651BA46A89D0588e97dD0B6562",
         "badgerWBTC_f": "0xaCe78D9BaB82b6B4783120Dba82aa10B040A14D9",
@@ -227,8 +227,8 @@ ADDRESSES_ETH = {
     "crv_factory_pools": {
         "badgerWBTC_f": "0x50f3752289e1456BfA505afd37B241bca23e685d",
         "pxCVXCVX_f": "0xF3456E8061461e144b3f252E69DcD5b6070fdEE0",
-#        "t_eth_f": "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",
-#        "cvx_eth_f": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+        #        "t_eth_f": "0x752eBeb79963cf0732E9c0fec72a49FD1DEfAEAC",
+        #        "cvx_eth_f": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
     },
     # mStable want tokens
 
@@ -297,28 +297,32 @@ ADDRESSES_ETH = {
                 "v1": "0x1C1fD689103bbFD701b3B7D41A3807F12814033D",
                 "v1.1": "0x3f98F3a21B125414e4740316bd6Ef14718764a22",
             },
-            "native.obtcCrv":{
+            "native.obtcCrv": {
                 "v1": "0x2bb864cdb4856ab2d148c5ca52dd7ccec126d138",
-                "v1.1":  "0x50Dd8A61Bdd11Cf5539DAA83Bc8E0F581eD8110a",
+                "v1.1": "0x50Dd8A61Bdd11Cf5539DAA83Bc8E0F581eD8110a",
             }
         }
     },
     "logic": {
-        "StrategyConvexStakingOptimizer": "0x0bB87f40D4eb6066a2311B7BE3B45A3D15771557", # V1.1
-        "StrategyCvxHelper": "0x9A12A9141363A5B343B781c4951d42E327B89397", # V1.1
-        "StrategyCvxCrvHelper": "0x76328277232c97BAf76D23A69015CB478293A048", # V1.1
+        "StrategyConvexStakingOptimizer": "0x0bB87f40D4eb6066a2311B7BE3B45A3D15771557",  # V1.1
+        "StrategyCvxHelper": "0x9A12A9141363A5B343B781c4951d42E327B89397",  # V1.1
+        "StrategyCvxCrvHelper": "0x76328277232c97BAf76D23A69015CB478293A048",  # V1.1
         "KeeperAccessControl": "0x4fe70eE8fa906D59A88DE5946F114BdbFC410a80",
-        "native.vestedCVX": "0x86ca553D5Ae7cD0005552D6E275786D5043800Bd", # V1.7.1 - Change bribes processor address
-        "native.graviAURA": "0x0d724E8AEE6F73b35A596C8C947c92c75eAc7818", # V1.1
+        "native.vestedCVX": "0x86ca553D5Ae7cD0005552D6E275786D5043800Bd",
+        # V1.7.1 - Change bribes processor address
+        "native.graviAURA": "0x0d724E8AEE6F73b35A596C8C947c92c75eAc7818",  # V1.1
         "RewardsRecoveryStrategy_distribution": "0xEDb5a82016c95B0F6099Ec51F463691Fa2ba02B9",
         "SettV1h": "0x9376B47E7eC9D4cfd5313Dc1FB0DFF4F61E8c481",
         "SettV1_1h_V1": "0x25c9BD2eE36ef38992f8a6BE4CadDA9442Bf4170",
         "SettV4h_V1": "0x0B7Cb84bc7ad4aF3E1C5312987B6E9A4612068AD",
-        "SettV1_1h_V2": "0x724f4153b3D69f64975f1B16cE4445fd7bC5C9a2", # V2 -> governanceOrStrategist approve/revoke + sweep
-        "SettV4h_V2": "0x4Da27cD2AE34a9E1776Ed01747A071C17Fa0b2Cf", # V2 -> governanceOrStrategist approve/revoke + sweep
-        "SimpleTimelockWithVoting": "0xb7AcD34643181C879437c2967538D5c0eA42b5D9", # V1.1 -> Beneficiary: devMulti
-        "BadgerSettPeak": "0x56bb91BfbeEB5400db72bcE4c15eb0Ddfd06002C", # V1.1
-        "uFragments": "0x020eb84309243Ed4B8E6C197AF145125dDE4AFDa", # V1.1
+        "SettV1_1h_V2": "0x724f4153b3D69f64975f1B16cE4445fd7bC5C9a2",
+        # V2 -> governanceOrStrategist approve/revoke + sweep
+        "SettV4h_V2": "0x4Da27cD2AE34a9E1776Ed01747A071C17Fa0b2Cf",
+        # V2 -> governanceOrStrategist approve/revoke + sweep
+        "SimpleTimelockWithVoting": "0xb7AcD34643181C879437c2967538D5c0eA42b5D9",
+        # V1.1 -> Beneficiary: devMulti
+        "BadgerSettPeak": "0x56bb91BfbeEB5400db72bcE4c15eb0Ddfd06002C",  # V1.1
+        "uFragments": "0x020eb84309243Ed4B8E6C197AF145125dDE4AFDa",  # V1.1
     },
     "guestlists": {
         "bimBTC": "0x7feCCc72aE222e0483cBDE212F5F88De62132546",
@@ -429,7 +433,7 @@ ADDRESSES_ETH = {
         "MTA": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
         "ANGLE": "0x31429d1856aD1377A8A0079410B297e1a9e214c2",
         "T": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
-        "UST": "0xa693B19d2931d498c5B318dF961919BB4aee87a5", # USTv2 (wormhole)
+        "UST": "0xa693B19d2931d498c5B318dF961919BB4aee87a5",  # USTv2 (wormhole)
         "LFT": "0xB620Be8a1949AA9532e6a3510132864EF9Bc3F82",
         "FLX": "0x6243d8CEA23066d098a15582d81a598b4e8391F4",
         "GRO": "0x3Ec8798B81485A254928B70CDA1cf0A2BB0B74D7",
@@ -547,16 +551,14 @@ ADDRESSES_IBBTC = {
     "bcrvTBTC": ADDRESSES_ETH["sett_vaults"]["bcrvTBTC"],
     "byvWBTC": ADDRESSES_ETH["yearn_vaults"]["byvWBTC"],
     "logic": {
-        "core": "0xafa40Da6a373eC4BBfdDAF2e695F3014aF5376c5", # Current logic
-        "badgerPeak": "0xbD82A0C250608543b8cAcfD4F0E4438438698df6", # Current logic
-        "byvWbtcPeak": "0xA9499b50C4A74000687435A895B55974F079ECaa", # Current logic
+        "core": "0xafa40Da6a373eC4BBfdDAF2e695F3014aF5376c5",  # Current logic
+        "badgerPeak": "0xbD82A0C250608543b8cAcfD4F0E4438438698df6",  # Current logic
+        "byvWbtcPeak": "0xA9499b50C4A74000687435A895B55974F079ECaa",  # Current logic
+        "IbbtcVault_zap": "0xc5b45ab3d237b0dfc8f8808df39d49ebde8171fe",
     },
     "sett_zap": "0x27Fb47B9Fb32B9cF660C4E0128bE0f4e883f3df1",
     "mint_zap": "0xe8E40093017A3A55B5c2BC3E9CA6a4d208c07734",
     "IbbtcVault_zap": "0x87C3Ef099c6143e4687b060285bad201b9efa493",
-    "logic": {
-        "IbbtcVault_zap": "0xc5b45ab3d237b0dfc8f8808df39d49ebde8171fe",
-    },
 }
 
 ADDRESSES_BSC = {
@@ -686,8 +688,8 @@ ADDRESSES_ARBITRUM = {
         "native.DXSIbbtcWeth": "0x4AeC063BB5322c9d4c1f46572f432aaE3b78b87c",
     },
     "logic": {
-        "native.renCrv": "0x021ea7548Ee9B40d57f47706A605043B05C6c92C", # v1.1
-        "native.tricrypto": "0x4Da27cD2AE34a9E1776Ed01747A071C17Fa0b2Cf", # v1.1
+        "native.renCrv": "0x021ea7548Ee9B40d57f47706A605043B05C6c92C",  # v1.1
+        "native.tricrypto": "0x4Da27cD2AE34a9E1776Ed01747A071C17Fa0b2Cf",  # v1.1
         "_deprecated": {
             "native.renCrv": {
                 "v1": "0x2eE1E845b601371608b6bA4a4665180dE3b14C85",
@@ -698,7 +700,7 @@ ADDRESSES_ARBITRUM = {
         }
     },
     "treasury_tokens": {
-        "BADGER" : "0xbfa641051ba0a0ad1b0acf549a89536a0d76472e",
+        "BADGER": "0xbfa641051ba0a0ad1b0acf549a89536a0d76472e",
         "WBTC": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
         "CRV": "0x11cdb42b0eb46d95f990bedd4695a6e3fa034978",
         "SUSHI": "0xd4d42f0b6def4ce0383636770ef773390d85c61a",
@@ -850,4 +852,3 @@ def reverse_addresses() -> dict:
     results[CHAIN_MATIC] = {v: k for k, v in checksummed_addr_polygon['sett_vaults'].items()}
     results[CHAIN_ARB] = {v: k for k, v in checksummed_addr_arb['sett_vaults'].items()}
     return results
-
