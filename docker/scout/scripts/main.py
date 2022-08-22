@@ -269,11 +269,12 @@ def update_crv_tokens_gauge(
 
 
 def update_crv_factory_tokens_gauge(
-        crv_tokens_gauge: Gauge, pool_name: str, pool_address: str) -> None:
+        crv_tokens_gauge: Gauge, amm_gauge: Gauge, pool_name: str, pool_address: str) -> None:
     log.info(f"Processing crvToken data for [bold] factory pool: {pool_name}...")
     pool_token_address = treasury_tokens[pool_name]
     crv_factory_interface = interface.CRVfactoryPool(pool_address)
     crv_token_interface = interface.ERC20(pool_token_address)
+    crv_token_symbol = crv_token_interface.symbol()
     token_address = get_treasury_token_addr_by_pool_name(pool_name, treasury_tokens)
 
     pool_divisor = 10 ** crv_token_interface.decimals()
@@ -281,25 +282,46 @@ def update_crv_factory_tokens_gauge(
 
     virtual_price = crv_factory_interface.get_virtual_price() / 1e18
     crv_tokens_gauge.labels(pool_name, token_address, "pricePerShare").set(virtual_price)
+    amm_gauge.labels(
+        crv_token_symbol, crv_token_interface.address,
+        None, None,
+        AMM_CURVE, "pricePerShare"
+    ).set(virtual_price)
     crv_tokens_gauge.labels(pool_name, token_address, "totalSupply").set(total_supply)
-
+    amm_gauge.labels(
+        crv_token_symbol, crv_token_interface.address,
+        None, None,
+        AMM_CURVE, "totalSupply"
+    ).set(total_supply)
     token_list = []
     for i in itertools.count(start=0):
         try:
             token_list.append(interface.ERC20(crv_factory_interface.coins(i)))
         except ValueError:
             break
-    for token in token_list:
+    for underlying_token in token_list:
+        token_balance = underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals()
         crv_tokens_gauge.labels(
-            pool_name, token.address,
-            f"{token.symbol()}_balance").set(token.balanceOf(pool_address) / 10 ** token.decimals())
-        if token.address != treasury_tokens['pxCVX']:  # TODO remove when CG pricing
+            pool_name, underlying_token.address,
+            f"{underlying_token.symbol()}_balance").set(token_balance)
+        if underlying_token.address != treasury_tokens['pxCVX']:  # TODO remove when CG pricing
+            usd_balance = (
+                usd_prices_by_token_address[underlying_token.address] *
+                underlying_token.balanceOf(pool_address) / 10 ** underlying_token.decimals()
+            )
+            amm_gauge.labels(
+                crv_token_symbol, crv_token_interface.address,
+                underlying_token.symbol(), underlying_token.address,
+                AMM_CURVE, "balance"
+            ).set(token_balance)
             crv_tokens_gauge.labels(
                 pool_name, token_address,
-                f"{token.symbol()}_usd_balance").set(
-                    usd_prices_by_token_address[token.address]
-                    * token.balanceOf(pool_address) / 10 ** token.decimals()
-            )
+                f"{underlying_token.symbol()}_usd_balance").set(usd_balance)
+            amm_gauge.labels(
+                crv_token_symbol, crv_token_interface.address,
+                underlying_token.symbol(), underlying_token.address,
+                AMM_CURVE, "usdBalance"
+            ).set(usd_balance)
 
 
 def update_crv_meta_tokens_gauge(
@@ -603,7 +625,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
         None,
         None,
         AMM_BALANCER,
-        "total_supply"
+        "totalSupply"
     ).set(bpt_total_supply)
     tokens, balances, _ = balancer_vault_contract.getPoolTokens(bpt_contract.getPoolId())
     bpt_cummulative_price = 0
@@ -627,7 +649,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             token_symbol,
             token_address_checksummed,
             AMM_BALANCER,
-            "token_balance"
+            "balance"
         ).set(token_balance)
 
         token_price_data = get_token_prices(token_address_checksummed, "usd", NETWORK)
@@ -664,7 +686,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             token_symbol,
             token_address_checksummed,
             AMM_BALANCER,
-            "usd_balance"
+            "usdBalance"
         ).set(token_balance)
     # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
     if bpt_cummulative_price != 0:
@@ -899,7 +921,7 @@ def main():
 
         for factory_pool_name, factory_pool_address in crv_factory_pools.items():
             update_crv_factory_tokens_gauge(
-                crv_tokens_gauge, factory_pool_name, factory_pool_address
+                crv_tokens_gauge, new_lp_token_gauge, factory_pool_name, factory_pool_address
             )
 
         # process 3crv data data
