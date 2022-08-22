@@ -895,7 +895,7 @@ def main():
         labelnames=["param"],
     )
     new_lp_token_gauge = Gauge(
-        name="lptoken_v2",
+        name="amm",
         documentation="Info about different AMM pools and their tokens",
         labelnames=["lptoken", "lpTokenAddress", "token", "tokenAddress", "amm", "param"]
     )
