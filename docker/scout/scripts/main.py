@@ -71,6 +71,7 @@ CRV_POOLS_WITH_CRV_STABLECOIN_POOLS = {**crv_pools, **crv_stablecoin_pools}
 
 AMM_BALANCER = "balancer"
 AMM_CURVE = "curve"
+AMM_SUSHI = "sushi"
 peak_sett_composition = {
     "badgerPeak": {
         "bcrvRenBTC": sett_vaults["bcrvRenBTC"],
@@ -161,7 +162,9 @@ def update_digg_gauge(digg_gauge, digg_prices, slpWbtcDigg, uniWbtcDigg):
     digg_gauge.labels("sushiswap").set(digg_sushi_price)
 
 
-def update_lp_tokens_gauge(lp_tokens_gauge, lp_tokens, lp_token, token_interfaces):
+def update_lp_tokens_gauge(
+        lp_tokens_gauge: Gauge, amm_gauge: Gauge, lp_tokens: Dict, lp_token, token_interfaces: List
+) -> None:
     lp_name = lp_token.name
     lp_address = lp_tokens[lp_name]
 
@@ -180,16 +183,31 @@ def update_lp_tokens_gauge(lp_tokens_gauge, lp_tokens, lp_token, token_interface
     token0_scale = 10 ** token0.decimals()
     token1_scale = 10 ** token1.decimals()
 
+    underlying_0_supply = token0_reserve / token0_scale
+    underlying_1_supply = token1_reserve / token1_scale
+    total_lp_token_supply = lp_supply / lp_scale
     lp_tokens_gauge.labels(lp_name, lp_address, f"{token0.symbol()}_supply").set(
-        token0_reserve / token0_scale
+        underlying_0_supply
     )
+    amm_gauge.labels(
+        lp_name, lp_address,
+        token0.symbol(), token0.address,
+        AMM_SUSHI, "totalSupply"
+    ).set(underlying_0_supply)
     lp_tokens_gauge.labels(lp_name, lp_address, f"{token1.symbol()}_supply").set(
-        token1_reserve / token1_scale
+        underlying_1_supply
     )
-    lp_tokens_gauge.labels(lp_name, lp_address, "totalLpTokenSupply").set(
-        lp_supply / lp_scale
-    )
-
+    amm_gauge.labels(
+        lp_name, lp_address,
+        token1.symbol(), token1.address,
+        AMM_SUSHI, "totalSupply"
+    ).set(underlying_1_supply)
+    lp_tokens_gauge.labels(lp_name, lp_address, "totalLpTokenSupply").set(total_lp_token_supply)
+    amm_gauge.labels(
+        lp_name, lp_address,
+        None, None,
+        AMM_SUSHI, "totalLpTokenSupply"
+    ).set(total_lp_token_supply)
     try:
         price = (
             ((token1_reserve / token1_scale) / (lp_supply / lp_scale))
@@ -198,6 +216,11 @@ def update_lp_tokens_gauge(lp_tokens_gauge, lp_tokens, lp_token, token_interface
         )
         usd_prices_by_token_address[lp_address] = price
         lp_tokens_gauge.labels(lp_name, "usdPricePerShare", lp_address).set(price)
+        amm_gauge.labels(
+            lp_name, lp_address,
+            None, None,
+            AMM_SUSHI, "usdPricePerShare"
+        ).set(price)
     except Exception as e:
         log.warning(f"Error calculating USD price for lpToken [bold]{lp_name}")
         log.warning(e)
@@ -949,7 +972,7 @@ def main():
         # process lp data
         for lp_token in lp_data:
             update_lp_tokens_gauge(
-                lp_tokens_gauge, lp_tokens, lp_token, token_interfaces
+                lp_tokens_gauge, new_lp_token_gauge, lp_tokens, lp_token, token_interfaces
             )
         # General Aura data (lockers)
         aura_token = token_interfaces[treasury_tokens['AURA']]
