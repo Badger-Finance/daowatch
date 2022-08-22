@@ -630,15 +630,12 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             "token_balance"
         ).set(token_balance)
 
+        token_price_data = get_token_prices(token_address_checksummed, "usd", NETWORK)
+        token_price = token_price_data[token_address_checksummed.lower()].get('usd', 0)
         # TODO: For now we skip stable pools price calculation. Impl in future if needed
         if not re.search('stable', bpt_name, re.IGNORECASE):
-            token_price_data = get_token_prices(token_address_checksummed, "usd", NETWORK)
-            bpt_cummulative_price += (
-                token_price_data[token_address_checksummed.lower()]['usd'] * token_balance
-            )
-        usd_prices_by_token_address[token_address] = (
-            bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals())
-        )
+            bpt_cummulative_price += token_price * token_balance
+        usd_prices_by_token_address[token_address] = token_price
         bpt_gauge.labels(
             bpt_name,
             bpt_name,
