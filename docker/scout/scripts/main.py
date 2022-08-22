@@ -494,32 +494,6 @@ def update_wallets_gauge(
             log.info(e)
 
 
-def update_xchain_bridge_gauge(
-    xchain_bridge_gauge,
-    custodian_name,
-    custodian_address,
-    token_interfaces,
-    treasury_tokens,
-):
-    log.info(
-        f"Checking balances on bridge [bold]{custodian_name}: {custodian_address} ..."
-    )
-
-    for token_name in NATIVE_TOKENS:
-        token_address = treasury_tokens[token_name]
-
-        token_interface = token_interfaces[token_address]
-        token_scale = 10 ** token_interface.decimals()
-        token_balance = token_interface.balanceOf(custodian_address)
-
-        xchain_bridge_gauge.labels("BSC", token_name, custodian_name, "balance").set(
-            token_balance / token_scale
-        )
-        xchain_bridge_gauge.labels("BSC", token_name, custodian_name, "usdBalance").set(
-            (token_balance / token_scale) * usd_prices_by_token_address[token_address]
-        )
-
-
 def update_rewards_gauge(rewards_gauge, badgertree, badger, digg, treasury_tokens):
     log.info(f"Calculating Badgertree reward holdings ...")
 
@@ -613,6 +587,22 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
             bpt_cummulative_price += (
                 token_price_data[token_address_checksummed.lower()]['usd'] * token_balance
             )
+        usd_prices_by_token_address[token_address] = (
+            bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals())
+        )
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "price"
+        ).set(usd_prices_by_token_address[token_address])
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "usd_balance"
+        ).set(balances[index] / (
+                10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address])
     # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
     if bpt_cummulative_price != 0:
         bpt_gauge.labels(
@@ -621,22 +611,6 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
             bpt_address,
             "mcap"
         ).set(bpt_cummulative_price)
-
-        usd_prices_by_token_address[token_address] = bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals())
-
-        bpt_gauge.labels(
-            bpt_name,
-            bpt_name,
-            bpt_address,
-            "price"
-        ).set( usd_prices_by_token_address[token_address])
-        bpt_gauge.labels(
-            bpt_name,
-            bpt_name,
-            bpt_address,
-            "usd_balance"
-        ).set(balances[index] / (10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address])
-
 
 
 def update_vebal_gauge(vebal_gauge: Gauge) -> None:
@@ -658,7 +632,6 @@ def main():
     log.info(
         f"Starting Prometheus scout-collector server at http://localhost:{PROMETHEUS_PORT}"
     )
-
     block_gauge = Gauge(
         name="blocks",
         documentation="Info about blocks processed",
@@ -708,11 +681,6 @@ def main():
         documentation="Watched wallet balances",
         labelnames=["walletName", "walletAddress", "token", "tokenAddress", "param"],
     )
-    xchain_bridge_gauge = Gauge(
-        name="xchainBridge",
-        documentation="Info about tokens in custody",
-        labelnames=["chain", "token", "bridge", "param"],
-    )
     rewards_gauge = Gauge(
         name="rewards",
         documentation="Badgertree reward holdings",
@@ -752,9 +720,6 @@ def main():
         labelnames=["lptoken", "lpTokenAddress", "tokenAddress", "amm", "param"]
     )
     start_http_server(PROMETHEUS_PORT)
-
-    # get all data
-    num_treasury_tokens = len(treasury_tokens)
     str_treasury_tokens = "".join(
         [
             f"\n\t[bold]{token_name}: {token_address}"
