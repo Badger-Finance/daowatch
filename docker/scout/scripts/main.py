@@ -69,6 +69,8 @@ CVX_ADDRESSES = {
 
 CRV_POOLS_WITH_CRV_STABLECOIN_POOLS = {**crv_pools, **crv_stablecoin_pools}
 
+AMM_BALANCER = "balancer"
+
 peak_sett_composition = {
     "badgerPeak": {
         "bcrvRenBTC": sett_vaults["bcrvRenBTC"],
@@ -552,7 +554,7 @@ def update_convex_info_gauge(convex_gauge: Gauge, convex_token, cvxcrv_token) ->
     )
 
 
-def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
+def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
     log.info(f"Processing BPT info for BPT: {bpt_name}")
     # Main Balancer Vault contract that acts as pool controller
     balancer_vault_contract = interface.BalancerVault(BALANCER_VAULT)
@@ -565,6 +567,14 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
         bpt_address,
         "total_supply"
     ).set(bpt_total_supply)
+    amm_gauge.labels(
+        bpt_name,
+        bpt_address,
+        None,
+        None,
+        AMM_BALANCER,
+        "total_supply"
+    ).set(bpt_total_supply)
     tokens, balances, _ = balancer_vault_contract.getPoolTokens(bpt_contract.getPoolId())
     bpt_cummulative_price = 0
     # Iterate through all BPT underlying tokens and set params. Also adds up prices in $ for each
@@ -573,11 +583,20 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
         log.warning(f"Underlying token for BPT {bpt_name}: {token_address}")
         token_address_checksummed = Web3.toChecksumAddress(token_address)
         bpt_underlying_token = interface.ERC20(token_address_checksummed)
+        token_symbol = bpt_underlying_token.symbol()
         token_balance = balances[index] / 10 ** bpt_underlying_token.decimals()
         bpt_gauge.labels(
             bpt_name,
-            bpt_underlying_token.symbol(),
+            token_symbol,
             token_address_checksummed,
+            "token_balance"
+        ).set(token_balance)
+        amm_gauge.labels(
+            bpt_name,
+            bpt_address,
+            token_symbol,
+            token_address_checksummed,
+            AMM_BALANCER,
             "token_balance"
         ).set(token_balance)
 
@@ -596,19 +615,44 @@ def update_bpt_gauge(bpt_gauge: Gauge, bpt_name: str, bpt_address: str) -> None:
             bpt_address,
             "price"
         ).set(usd_prices_by_token_address[token_address])
+        amm_gauge.labels(
+            bpt_name,
+            bpt_address,
+            token_symbol,
+            token_address_checksummed,
+            AMM_BALANCER,
+            "price"
+        ).set(usd_prices_by_token_address[token_address])
+        token_balance = balances[index] / (
+                10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address]
         bpt_gauge.labels(
             bpt_name,
             bpt_name,
             bpt_address,
             "usd_balance"
-        ).set(balances[index] / (
-                10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address])
+        ).set(token_balance)
+        amm_gauge.labels(
+            bpt_name,
+            bpt_address,
+            token_symbol,
+            token_address_checksummed,
+            AMM_BALANCER,
+            "usd_balance"
+        ).set(token_balance)
     # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
     if bpt_cummulative_price != 0:
         bpt_gauge.labels(
             bpt_name,
             bpt_name,
             bpt_address,
+            "mcap"
+        ).set(bpt_cummulative_price)
+        amm_gauge.labels(
+            bpt_name,
+            bpt_address,
+            None,
+            None,
+            AMM_BALANCER,
             "mcap"
         ).set(bpt_cummulative_price)
 
@@ -717,7 +761,7 @@ def main():
     new_lp_token_gauge = Gauge(
         name="lptoken_v2",
         documentation="Info about different AMM pools and their tokens",
-        labelnames=["lptoken", "lpTokenAddress", "tokenAddress", "amm", "param"]
+        labelnames=["lptoken", "lpTokenAddress", "token", "tokenAddress", "amm", "param"]
     )
     start_http_server(PROMETHEUS_PORT)
     str_treasury_tokens = "".join(
@@ -808,7 +852,7 @@ def main():
         update_vebal_gauge(vebal_gauge)
         # Process balancer bpt data
         for bpt_name, bpt_address in BALANCER_BPTS.items():
-            update_bpt_gauge(bpt_gauge, bpt_name, bpt_address)
+            update_bpt_gauge(bpt_gauge, new_lp_token_gauge, bpt_name, bpt_address)
         # process curve pool data
         for pool_name, pool_address in CRV_POOLS_WITH_CRV_STABLECOIN_POOLS.items():
             update_crv_tokens_gauge(crv_tokens_gauge, pool_name, pool_address)
