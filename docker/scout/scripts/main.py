@@ -746,7 +746,11 @@ def main():
         documentation="convex token data",
         labelnames=["param"],
     )
-
+    new_lp_token_gauge = Gauge(
+        name="lptoken_v2",
+        documentation="Info about different AMM pools and their tokens",
+        labelnames=["lptoken", "lpTokenAddress", "tokenAddress", "amm", "param"]
+    )
     start_http_server(PROMETHEUS_PORT)
 
     # get all data
@@ -775,8 +779,8 @@ def main():
 
     digg_prices = get_digg_data(oracles["oracle"], oracles["oracle_provider"])
 
-    slpWbtcDigg = interface.Pair(lp_tokens["slpWbtcDigg"])
-    uniWbtcDigg = interface.Pair(lp_tokens["uniWbtcDigg"])
+    slp_wbtc_digg = interface.Pair(lp_tokens["slpWbtcDigg"])
+    uni_wbtc_digg = interface.Pair(lp_tokens["uniWbtcDigg"])
 
     badgertree = interface.Badgertree(badger_wallets["badgertree"])
     badgertree_cycles = get_badgertree_data(badgertree)
@@ -812,7 +816,7 @@ def main():
                 NETWORK,
             )
         # process digg oracle prices
-        update_digg_gauge(digg_gauge, digg_prices, slpWbtcDigg, uniWbtcDigg)
+        update_digg_gauge(digg_gauge, digg_prices, slp_wbtc_digg, uni_wbtc_digg)
 
         # process rewards balances
         update_rewards_gauge(rewards_gauge, badgertree, badger, digg, treasury_tokens)
@@ -848,7 +852,9 @@ def main():
             update_crv_meta_tokens_gauge(crv_tokens_gauge, meta_pool_name, meta_pool_address)
 
         for factory_pool_name, factory_pool_address in crv_factory_pools.items():
-            update_crv_factory_tokens_gauge(crv_tokens_gauge, factory_pool_name, factory_pool_address)
+            update_crv_factory_tokens_gauge(
+                crv_tokens_gauge, factory_pool_name, factory_pool_address
+        )
 
         # process 3crv data data
         for pool_name, pool_address in crv_3_pools.items():
