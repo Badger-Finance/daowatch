@@ -484,7 +484,7 @@ def update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens):
             sett_info["pricePerShare"] * usd_prices_by_token_address[sett_token_address]
         )
         sett_gauge.labels(sett_name, sett_address, sett_token_name, "usdBalance").set(
-            usd_prices_by_token_address[sett_address] * sett_info["balance"]
+            usd_prices_by_token_address[sett_address] * sett_info["totalSupply"]
         )
     except Exception as e:
         log.warning(f"Error calculating USD price for Sett [bold]{sett_name}")
@@ -739,8 +739,8 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
         usd_prices_by_token_address[token_address] = token_price
         bpt_gauge.labels(
             bpt_name,
-            bpt_name,
-            bpt_address,
+            token_symbol,
+            token_address_checksummed,
             "price"
         ).set(usd_prices_by_token_address[token_address])
         amm_gauge.labels(
@@ -751,14 +751,14 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             AMM_BALANCER,
             "price"
         ).set(usd_prices_by_token_address[token_address])
-        token_balance = balances[index] / (
+        usd_token_balance = balances[index] / (
                 10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address]
         bpt_gauge.labels(
             bpt_name,
-            bpt_name,
-            bpt_address,
+            token_symbol,
+            token_address_checksummed,
             "usd_balance"
-        ).set(token_balance)
+        ).set(usd_token_balance)
         amm_gauge.labels(
             bpt_name,
             bpt_address,
@@ -766,7 +766,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             token_address_checksummed,
             AMM_BALANCER,
             "usdBalance"
-        ).set(token_balance)
+        ).set(usd_token_balance)
     # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
     if bpt_cummulative_price != 0:
         bpt_gauge.labels(
@@ -775,6 +775,12 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             bpt_address,
             "mcap"
         ).set(bpt_cummulative_price)
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "usd_price"
+        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
         amm_gauge.labels(
             bpt_name,
             bpt_address,
