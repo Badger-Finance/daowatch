@@ -484,7 +484,7 @@ def update_sett_gauge(sett_gauge, sett, sett_vaults, treasury_tokens):
             sett_info["pricePerShare"] * usd_prices_by_token_address[sett_token_address]
         )
         sett_gauge.labels(sett_name, sett_address, sett_token_name, "usdBalance").set(
-            usd_prices_by_token_address[sett_address] * sett_info["balance"]
+            usd_prices_by_token_address[sett_address] * sett_info["totalSupply"]
         )
     except Exception as e:
         log.warning(f"Error calculating USD price for Sett [bold]{sett_name}")
