@@ -737,12 +737,6 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
         if not re.search('stable', bpt_name, re.IGNORECASE):
             bpt_cummulative_price += token_price * token_balance
         usd_prices_by_token_address[token_address] = token_price
-        bpt_gauge.labels(
-            bpt_name,
-            token_symbol,
-            token_address_checksummed,
-            "price"
-        ).set(usd_prices_by_token_address[token_address])
         amm_gauge.labels(
             bpt_name,
             bpt_address,
@@ -753,12 +747,6 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
         ).set(usd_prices_by_token_address[token_address])
         usd_token_balance = balances[index] / (
                 10 ** bpt_underlying_token.decimals()) * usd_prices_by_token_address[token_address]
-        bpt_gauge.labels(
-            bpt_name,
-            token_symbol,
-            token_address_checksummed,
-            "usd_balance"
-        ).set(usd_token_balance)
         amm_gauge.labels(
             bpt_name,
             bpt_address,
@@ -769,6 +757,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
         ).set(usd_token_balance)
     # For stable pools we don't calc the price, hence cannot update price gauges for stable BPT
     if bpt_cummulative_price != 0:
+        bpt_price = bpt_cummulative_price / bpt_total_supply
         bpt_gauge.labels(
             bpt_name,
             bpt_name,
@@ -779,8 +768,14 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             bpt_name,
             bpt_name,
             bpt_address,
-            "usd_price"
-        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
+            "usd_balance"
+        ).set(bpt_cummulative_price)
+        bpt_gauge.labels(
+            bpt_name,
+            bpt_name,
+            bpt_address,
+            "price"
+        ).set(bpt_price)
         amm_gauge.labels(
             bpt_name,
             bpt_address,
@@ -796,7 +791,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
             None,
             AMM_BALANCER,
             "price"
-        ).set(bpt_cummulative_price / (bpt_total_supply / 10 ** bpt_contract.decimals()))
+        ).set(bpt_price)
 
 
 def update_vebal_gauge(vebal_gauge: Gauge) -> None:
