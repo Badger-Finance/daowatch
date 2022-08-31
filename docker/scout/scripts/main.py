@@ -691,7 +691,7 @@ def update_bpt_gauge(bpt_gauge: Gauge, amm_gauge: Gauge, bpt_name: str, bpt_addr
     balancer_vault_contract = interface.BalancerVault(BALANCER_VAULT)
 
     bpt_contract = interface.BPTWeighed(bpt_address)
-    bpt_total_supply = bpt_contract.totalSupply()
+    bpt_total_supply = bpt_contract.totalSupply() / 10 ** bpt_contract.decimals()
     bpt_gauge.labels(
         bpt_name,
         bpt_name,
